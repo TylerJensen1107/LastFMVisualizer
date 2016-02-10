@@ -1,0 +1,1 @@
+define(["require","components/modal","jquery"],function(o){"use strict";var t=o("components/modal"),n=o("jquery"),e=function(){};return e.prototype.start=function(){n("body").on("click.open-modal","[data-open-modal]",this.click.bind(this))},e.prototype.stop=function(){n("body").off("click.open-modal")},e.prototype.click=function(o){t.open(n(o.target).data("open-modal"))},e});

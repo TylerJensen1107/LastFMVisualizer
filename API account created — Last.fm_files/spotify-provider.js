@@ -1,0 +1,1 @@
+define(["require","player/providers/spotify/spotify-proxy"],function(t){"use strict";var i=t("player/providers/spotify/spotify-proxy"),p=function(t,i){this.app=i,this.$el=t};return p.prototype={start:function(){new i(this.app,this.$el.data("spotify-modal"))}},p});
