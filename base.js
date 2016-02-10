@@ -20,9 +20,6 @@ var yAxis = d3.svg.axis().scale(y)
     .orient("left").ticks(5);
 
 // Define the line
-var valueline = d3.svg.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.close); });
 
 var svg = d3.select("body")
 .append("svg")
@@ -47,14 +44,14 @@ $.ajax({
 		var to = weeklyData.to;
 		var from = weeklyData.from
 		$.ajax({
-			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyAlbumChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=tylerjensen1107&format=json&from=" + from + "&to=" + to,
+			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=tylerjensen1107&format=json&from=" + from + "&to=" + to,
 
 		}).done(function(data) {
 				console.log(data);
-			$.each(data.weeklyalbumchart.album, function(index, weeklyData) {
+			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
 				if(!dataArray[weeklyData.name])
 					dataArray[weeklyData.name] = [];
- 					dataArray[weeklyData.name].push({date: data.weeklyalbumchart['@attr'].to, 
+ 					dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
 												 playCount: weeklyData.playcount});
 			});
 
