@@ -9,11 +9,11 @@ var margin = {top: 40, right: 20, bottom: 30, left: 50},
 // Parse the date / time
 var parseDate = d3.time.format("%d-%b-%y").parse;
 
-var maxWeeks = 50;
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]);
 
-// Set the ranges
-var x = d3.time.scale().range([0, 50 * 12]);	// x axis
-var y = d3.scale.linear().range([height, 0]);	// y axis
+//domains
+var x = d3.scale.linear().domain([0, 50]);
 
 // Define the axes
 var xAxis = d3.svg.axis().scale(x)
@@ -32,12 +32,10 @@ var svg = d3.select("body")
     .attr("transform", 
           "translate(" + margin.left + "," + margin.top + ")");
 
-    var valueline = d3.svg.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.playCount); });
 
 var dataArray = [];
-var dateArray = [];
+
+var week = 0;
 
 //Last FM API calls
 $.ajax({
@@ -46,12 +44,12 @@ $.ajax({
 }).done(function(data) {
 	$.each(data.weeklychartlist.chart, function(index, weeklyData) {
 		var to = weeklyData.to;
-		var from = weeklyData.from
+		var from = weeklyData.from;
 		$.ajax({
 			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=tylerjensen1107&format=json&from=" + from + "&to=" + to,
 
 		}).done(function(data) {
-				//console.log(data);
+			if(data.weeklyartistchart.artist.length > 0) week++;
 			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
 				//console.log(weeklyData);
 
@@ -73,16 +71,26 @@ $.ajax({
 			});
 
 			console.log(dataArray);
+			// console.log(data);
+   //          if(data.weeklyartistchart.artist.length > 0) week++;
+			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+			// 	if(!dataArray[week])
+			// 		dataArray[week] = [];
+ 		// 		dataArray[week].push({artist: weeklyData.name, 
+			// 									 playCount: weeklyData.playcount});
+			// });
+
 		});
 		console.log(dataArray.length);
 	});
 
 });
 
-dataArray.forEach(function(d) {
-    d.date = parseDate(d.date);
-    d.close = +d.close;
-});
+setTimeout(function() {
+    console.log(dataArray);
+    d3.select("body").selectAll("p").data(dataArray["Unkown Mortal Orchestra"]);
+     x.domain(d3.extent(dataArray["Unkown Mortal Orchestra"], function(d) { console.log(d); return d.date; }));
+}, 10000);
 
 svg.append("g")
 	.attr("class", "x axis")
