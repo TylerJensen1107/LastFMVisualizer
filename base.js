@@ -1,7 +1,7 @@
 console.log("here");
 
 //Set up D3 graph
-var margin = {top: 40, right: 20, bottom: 30, left: 50},
+var margin = {top: 40, right: 0, bottom: 30, left: 50},
 	// 
     width = 1000 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
@@ -13,7 +13,7 @@ var x = d3.scale.linear().range([0, width]);
 var y = d3.scale.linear().range([height, 0]);
 
 //domains
-var x = d3.scale.linear().domain([0, 50]);
+// var y = d3.scale.linear().domain([0, 50]);
 
 // Define the axes
 var xAxis = d3.svg.axis().scale(x)
@@ -22,8 +22,9 @@ var xAxis = d3.svg.axis().scale(x)
 var yAxis = d3.svg.axis().scale(y)
     .orient("left").ticks(5);
 
-// Define the line
+// y.domain([0, d3.max(data, function(d) { return d.close; })]);
 
+// Define the line
 var svg = d3.select("body")
 .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -49,42 +50,46 @@ $.ajax({
 			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=tylerjensen1107&format=json&from=" + from + "&to=" + to,
 
 		}).done(function(data) {
-			if(data.weeklyartistchart.artist.length > 0) week++;
-			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-				//console.log(weeklyData);
+			if(data.weeklyartistchart.artist.length > 0) {
+        week++;
+  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+  				// if(!dataArray[weeklyData.name])
+  				// 	dataArray[weeklyData.name] = [];
+   			// 	dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
+  				// 								playCount: weeklyData.playcount});
 
-				// if(!dataArray[weeklyData.name])
-				// 	dataArray[weeklyData.name] = [];
- 			// 	dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
-				// 								playCount: weeklyData.playcount});
+  				// Converts string of date in seconds to MM/DD/YYYY
+  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
+  					.toLocaleDateString();
 
-				// Converts string of date in seconds to MM/DD/YYYY
-				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
-					.toLocaleDateString();
+   				if(!dataArray[date])
+  					dataArray[date] = [];
+   				dataArray[date].push({name: weeklyData.name, 
+  												playCount: weeklyData.playcount,
+  												weekDate: date,
+  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+                          weekNumber: week
+                        });
+  			});
 
- 				if(!dataArray[date])
-					dataArray[date] = [];
- 				dataArray[date].push({name: weeklyData.name, 
-												playCount: weeklyData.playcount,
-												weekDate: date,
-												dateInSeconds: data.weeklyartistchart['@attr'].to});
-			});
-
-			console.log(dataArray);
-			// console.log(data);
-   //          if(data.weeklyartistchart.artist.length > 0) week++;
-			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-			// 	if(!dataArray[week])
-			// 		dataArray[week] = [];
- 		// 		dataArray[week].push({artist: weeklyData.name, 
-			// 									 playCount: weeklyData.playcount});
-			// });
-
+  			console.log(dataArray);
+    			// console.log(data);
+       //          if(data.weeklyartistchart.artist.length > 0) week++;
+    			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+    			// 	if(!dataArray[week])
+    			// 		dataArray[week] = [];
+     		// 		dataArray[week].push({artist: weeklyData.name, 
+    			// 									 playCount: weeklyData.playcount});
+    			// });
+      }
 		});
-		console.log(dataArray.length);
 	});
-
 });
+
+// Responsible for setting the domain with the retrieved data
+// x.domain(dataArray.map(function(d) { return d.1/3/2016; }));
+// code omitted.
+// .on('mouseout', tip.hide)
 
 setTimeout(function() {
     console.log(dataArray);
