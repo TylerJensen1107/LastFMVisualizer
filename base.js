@@ -5,6 +5,7 @@ var bands = 0;
 
 var week = -1;
 var maxPlayCount = 0;
+var csvString = "band,week,playcount\n";
 
 //Last FM API calls
 $.ajax({
@@ -30,6 +31,7 @@ $.ajax({
   				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
   					.toLocaleDateString();
   				var name = weeklyData.name;
+  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
 
   				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
 
@@ -121,7 +123,7 @@ $.ajax({
 
   var xScale = d3.scale.linear().range([0, innerWidth]);
   var yScale = d3.scale.linear().range([innerHeight, 0]);
-  var colorScale = d3.scale.category10();
+  var colorScale = d3.scale.category20();
 
 
   var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
@@ -132,13 +134,13 @@ $.ajax({
     .outerTickSize(0);
 
   var stack = d3.layout.stack()
-    .y(function (d){ return d[yColumn]; })
+    .y(function (d){ return d.playcount; })
     .values(function (d){ return d.values; });
 
   var area = d3.svg.area()
-    .x(function(d) { return xScale(d.weekNumber); })
-    .y0(function(d) { return yScale(d.playCount); })
-    .y1(function(d) { return yScale(d.playCount + 2); });
+    .x(function(d) { return xScale(d.week); })
+    .y0(function(d) { return yScale(d.y0); })
+    .y1(function(d) { return yScale(d.y0 + d.y); });
     
   var colorLegend = d3.legend.color()
     .scale(colorScale)
@@ -148,27 +150,38 @@ $.ajax({
     .labelOffset(4);
 
   function render(data){
-  	console.log("IN RENDER");
+  	 			console.log("here3");
 
+    var nested = d3.nest()
+      .key(function (d){ return d.band; })
+      .entries(data);
 
-    colorScale.domain(data.map(function (d, i){ return d[0].name; }));
+      console.log(nested);
+     colorScale.domain(nested.map(function (d){ return d.key; }));
+
 
     // Reversed the order here so the order matches between legend & areas.
-    //var layers = stack(nested.reverse());
+    var layers = stack(nested.reverse());
+    console.log(layers);
 
-    xScale.domain([0, week]);
-    yScale.domain([
-      0,
-      maxPlayCount
-    ]);
+    xScale.domain(d3.extent(data, function (d){ return d.week; }));
+        yScale.domain([
+          0,
+          d3.max(layers, function (layer){
+            return d3.max(layer.values, function (d){
+              return d.y0 + d.y;
+            });
+          })
+        ]);
 
-    var paths = g.selectAll(".chart-area").data(data);
+    var paths = g.selectAll(".chart-area").data(layers);
     paths.enter().append("path").attr("class", "chart-line");
     paths.exit().remove();
     paths
-      .attr("d", function (d, i){ return area(d); })
-      .attr("stroke", function (d){ return colorScale(d[0].name); })
-      .attr("fill", function (d){ return colorScale(d[0].name); });
+      .attr("d", function (d){ return area(d.values); })
+      .attr("fill", function (d){ return colorScale(d.key); });
+    paths.append("svg:title").text(function(d) { console.log(this); return d.key; });
+
 
     xAxisG.call(xAxis);
     yAxisG.call(yAxis);
@@ -177,12 +190,38 @@ $.ajax({
   }
 
   function type(d){
-    d.year = new Date(d.year);
-    d.population = +d.population;
+    d.week = +d.week;
+    d.playcount = +d.playcount;
     return d;
   }
 
  setTimeout(function() {
-    render(dataArray);
+ 	dataArray.sort(function(a, b) {
+ 		return b.length - a.length;
+ 	});
+ 	for(var i = 0; i < 10; i++) {
+ 		var index = 0;
+ 		for(var j = 0; j < week; j++) {
+ 			console.log(dataArray[i][j]);
+ 			if(dataArray[i][index]) {
+ 				if(dataArray[i][index].weekNumber == j) {
+		 			csvString += dataArray[i][index].name + ",";
+					csvString += dataArray[i][index].weekNumber + ",";
+	 				csvString += dataArray[i][index].playCount + "\n";
+	 				index++;
+	 			} else {
+	 				csvString += dataArray[i][0].name + ",";
+					csvString += j + ",";
+	 				csvString += 0 + "\n";
+	 			}
+ 			} else {
+ 				csvString += dataArray[i][0].name + ",";
+				csvString += j + ",";
+ 				csvString += 0 + "\n";
+ 			}
+ 		}
+ 	}
+ 	console.log(csvString);
+   render(d3.csv.parse(csvString, type));
 
 }, 10000);
