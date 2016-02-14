@@ -7,68 +7,111 @@ var week = -1;
 var maxPlayCount = 0;
 var csvString = "band,week,playcount\n";
 
-//Last FM API calls
-$.ajax({
-	url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyChartList&api_key=5e2801138b4ef76aeb794a9469cb3687&user=tylerjensen1107&format=json",
+document.getElementById("submit").onclick = callLoadName;
 
-}).done(function(data) {
-	$.each(data.weeklychartlist.chart, function(index, weeklyData) {
-		var to = weeklyData.to;
-		var from = weeklyData.from;
-		$.ajax({
-			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=tylerjensen1107&format=json&from=" + from + "&to=" + to,
+function callLoadName() {
+	loadName(document.getElementById("name").value);
 
-		}).done(function(data) {
-			if(data.weeklyartistchart.artist.length > 0) {
-        week++;
-  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-  				// if(!dataArray[weeklyData.name])
-  				// 	dataArray[weeklyData.name] = [];
-   			// 	dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
-  				// 								playCount: weeklyData.playcount});
+	document.getElementById("loading").style.display = "inline";
+	document.getElementById("loading").style.width = "50px";
+	document.getElementById("loading").style.height = "50px";
+	setTimeout(function() {
+ 	dataArray.sort(function(a, b) {
+ 		return b.length - a.length;
+ 	});
+ 	for(var i = 0; i < 10; i++) {
+ 		var index = 0;
+ 		for(var j = 0; j < week; j++) {
+ 			console.log(dataArray[i][j]);
+ 			if(dataArray[i][index]) {
+ 				if(dataArray[i][index].weekNumber == j) {
+		 			csvString += dataArray[i][index].name + ",";
+					csvString += dataArray[i][index].weekNumber + ",";
+	 				csvString += dataArray[i][index].playCount + "\n";
+	 				index++;
+	 			} else {
+	 				csvString += dataArray[i][0].name + ",";
+					csvString += j + ",";
+	 				csvString += 0 + "\n";
+	 			}
+ 			} else {
+ 				csvString += dataArray[i][0].name + ",";
+				csvString += j + ",";
+ 				csvString += 0 + "\n";
+ 			}
+ 		}
+ 	}
+ 	console.log(csvString);
+   render(d3.csv.parse(csvString, type));
+   document.getElementById("loading").style.display = "none";
 
-  				// Converts string of date in seconds to MM/DD/YYYY
-  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
-  					.toLocaleDateString();
-  				var name = weeklyData.name;
-  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
+	}, 10000);
 
-  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
+}
 
-   				if(!bandNameArray[name]) {
-  					bandNameArray[name] = {index: bands,
-  											  name: name};
-  					bands++;
+function loadName(name) {
+	$.ajax({
+		url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyChartList&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json",
 
-  					dataArray.push([{name: weeklyData.name, 
-  												playCount: weeklyData.playcount,
-  												weekDate: date,
-  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-                          weekNumber: week
-                        }]);
+	}).done(function(data) {
+		$.each(data.weeklychartlist.chart, function(index, weeklyData) {
+			var to = weeklyData.to;
+			var from = weeklyData.from;
+			$.ajax({
+				url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json&from=" + from + "&to=" + to,
 
-  				} else {
-   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
-  												playCount: weeklyData.playcount,
-  												weekDate: date,
-  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-                          weekNumber: week
-                        });
-   				}
-  			});
+			}).done(function(data) {
+				if(data.weeklyartistchart.artist.length > 0) {
+	        week++;
+	  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+	  				// if(!dataArray[weeklyData.name])
+	  				// 	dataArray[weeklyData.name] = [];
+	   			// 	dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
+	  				// 								playCount: weeklyData.playcount});
 
-    			// console.log(data);
-       //          if(data.weeklyartistchart.artist.length > 0) week++;
-    			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-    			// 	if(!dataArray[week])
-    			// 		dataArray[week] = [];
-     		// 		dataArray[week].push({artist: weeklyData.name, 
-    			// 									 playCount: weeklyData.playcount});
-    			// });
-      }
+	  				// Converts string of date in seconds to MM/DD/YYYY
+	  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
+	  					.toLocaleDateString();
+	  				var name = weeklyData.name;
+	  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
+
+	  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
+
+	   				if(!bandNameArray[name]) {
+	  					bandNameArray[name] = {index: bands,
+	  											  name: name};
+	  					bands++;
+
+	  					dataArray.push([{name: weeklyData.name, 
+	  												playCount: weeklyData.playcount,
+	  												weekDate: date,
+	  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+	                          weekNumber: week
+	                        }]);
+
+	  				} else {
+	   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
+	  												playCount: weeklyData.playcount,
+	  												weekDate: date,
+	  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+	                          weekNumber: week
+	                        });
+	   				}
+	  			});
+
+	    			// console.log(data);
+	       //          if(data.weeklyartistchart.artist.length > 0) week++;
+	    			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+	    			// 	if(!dataArray[week])
+	    			// 		dataArray[week] = [];
+	     		// 		dataArray[week].push({artist: weeklyData.name, 
+	    			// 									 playCount: weeklyData.playcount});
+	    			// });
+	      }
+			});
 		});
 	});
-});
+}
 
 // Responsible for setting the domain with the retrieved data
 // x.domain(dataArray.map(function(d) { return d.1/3/2016; }));
@@ -76,8 +119,8 @@ $.ajax({
 // .on('mouseout', tip.hide)
 
 
-  var outerWidth = 2000;
-  var outerHeight = 1000;
+  var outerWidth = 1000;
+  var outerHeight = 500;
   var margin = { left: 55, top: 5, right: 100, bottom: 60 };
 
   var xColumn = "weekNumber";
@@ -180,7 +223,17 @@ $.ajax({
     paths
       .attr("d", function (d){ return area(d.values); })
       .attr("fill", function (d){ return colorScale(d.key); });
-    paths.append("svg:title").text(function(d) { console.log(this); return d.key; });
+    paths.append("svg:title").text(function(d) { console.log("Here"); return d.key; });
+    paths.on("mouseover", function() {
+    	console.log(this);
+    	d3.select(this).attr("stroke", "black");
+    	d3.select(this).attr("stroke-width", "3");
+    });
+        paths.on("mouseout", function() {
+    	console.log(this);
+    	d3.select(this).attr("stroke", "white");
+    	d3.select(this).attr("stroke-width", "0");
+    });
 
 
     xAxisG.call(xAxis);
@@ -195,33 +248,3 @@ $.ajax({
     return d;
   }
 
- setTimeout(function() {
- 	dataArray.sort(function(a, b) {
- 		return b.length - a.length;
- 	});
- 	for(var i = 0; i < 10; i++) {
- 		var index = 0;
- 		for(var j = 0; j < week; j++) {
- 			console.log(dataArray[i][j]);
- 			if(dataArray[i][index]) {
- 				if(dataArray[i][index].weekNumber == j) {
-		 			csvString += dataArray[i][index].name + ",";
-					csvString += dataArray[i][index].weekNumber + ",";
-	 				csvString += dataArray[i][index].playCount + "\n";
-	 				index++;
-	 			} else {
-	 				csvString += dataArray[i][0].name + ",";
-					csvString += j + ",";
-	 				csvString += 0 + "\n";
-	 			}
- 			} else {
- 				csvString += dataArray[i][0].name + ",";
-				csvString += j + ",";
- 				csvString += 0 + "\n";
- 			}
- 		}
- 	}
- 	console.log(csvString);
-   render(d3.csv.parse(csvString, type));
-
-}, 10000);
