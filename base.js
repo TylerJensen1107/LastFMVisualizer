@@ -65,65 +65,68 @@ function callLoadName() {
 }
 
 function loadName(name) {
+
+	var def = $.Deferred();
+
 	$.ajax({
 		url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyChartList&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json",
 
 	}).done(function(data) {
-		$.each(data.weeklychartlist.chart, function(index, weeklyData) {
-			var to = weeklyData.to;
-			var from = weeklyData.from;
-			$.ajax({
-				url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json&from=" + from + "&to=" + to,
 
-			}).done(function(data) {
-				if(data.weeklyartistchart.artist.length > 0) {
-	        week++;
-	  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-	  				// if(!dataArray[weeklyData.name])
-	  				// 	dataArray[weeklyData.name] = [];
-	   			// 	dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
-	  				// 								playCount: weeklyData.playcount});
+		var requests = [];
 
-	  				// Converts string of date in seconds to MM/DD/YYYY
-	  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
-	  					.toLocaleDateString();
-	  				var name = weeklyData.name;
-	  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
+        requests.push(loadWeekData(data));
 
-	  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
+        $.when.apply($, requests).then(function() { def.resolve(); });
 
-	   				if(!bandNameArray[name]) {
-	  					bandNameArray[name] = {index: bands,
-	  											  name: name};
-	  					bands++;
+	});
 
-	  					dataArray.push([{name: weeklyData.name, 
-	  												playCount: weeklyData.playcount,
-	  												weekDate: date,
-	  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-	                          weekNumber: week
-	                        }]);
+	return def.promise();
+}
 
-	  				} else {
-	   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
-	  												playCount: weeklyData.playcount,
-	  												weekDate: date,
-	  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-	                          weekNumber: week
-	                        });
-	   				}
-	  			});
+var loadWeekData() {
 
-	    			// console.log(data);
-	       //          if(data.weeklyartistchart.artist.length > 0) week++;
-	    			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-	    			// 	if(!dataArray[week])
-	    			// 		dataArray[week] = [];
-	     		// 		dataArray[week].push({artist: weeklyData.name, 
-	    			// 									 playCount: weeklyData.playcount});
-	    			// });
-	      }
-			});
+	var def = $.Deferred(), requests = [];
+
+	$.each(data.weeklychartlist.chart, function(index, weeklyData) {
+		var to = weeklyData.to;
+		var from = weeklyData.from;
+		$.ajax({
+			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json&from=" + from + "&to=" + to,
+
+		}).done(function(data) {
+			if(data.weeklyartistchart.artist.length > 0) {
+        		week++;
+  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
+  					.toLocaleDateString();
+  				var name = weeklyData.name;
+  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
+
+  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
+
+   				if(!bandNameArray[name]) {
+  					bandNameArray[name] = {index: bands,
+  											  name: name};
+  					bands++;
+
+  					dataArray.push([{name: weeklyData.name, 
+  												playCount: weeklyData.playcount,
+  												weekDate: date,
+  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+                          weekNumber: week
+                        }]);
+
+  				} else {
+   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
+  												playCount: weeklyData.playcount,
+  												weekDate: date,
+  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+                          weekNumber: week
+                        });
+   				}
+  			});
+      	}
 		});
 	});
 }
