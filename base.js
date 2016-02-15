@@ -2,6 +2,8 @@
 var dataArray = [];
 var bandNameArray = [];
 var bands = 0;
+var TIME_CONST = 52;
+var NUM_BANDS = 50;
 
 var week = -1;
 var maxPlayCount = 0;
@@ -19,25 +21,38 @@ function callLoadName() {
  	dataArray.sort(function(a, b) {
  		return b.length - a.length;
  	});
- 	for(var i = 0; i < 10; i++) {
+ 	for(var i = 0; i < NUM_BANDS; i++) {
  		var index = 0;
+ 		var monthCount = 0;
  		for(var j = 0; j < week; j++) {
  			console.log(dataArray[i][j]);
  			if(dataArray[i][index]) {
- 				if(dataArray[i][index].weekNumber == j) {
-		 			csvString += dataArray[i][index].name + ",";
-					csvString += dataArray[i][index].weekNumber + ",";
-	 				csvString += dataArray[i][index].playCount + "\n";
+ 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
+ 					if(j % TIME_CONST == 0) {
+			 			monthCount += parseInt(dataArray[i][index].playCount);
+			 			csvString += dataArray[i][index].name + ",";
+						csvString += j / TIME_CONST + ",";
+		 				csvString += monthCount + "\n";
+		 				monthCount = 0;
+		 			} else {
+		 				monthCount += parseInt(dataArray[i][index].playCount);
+		 			}
 	 				index++;
-	 			} else {
-	 				csvString += dataArray[i][0].name + ",";
-					csvString += j + ",";
-	 				csvString += 0 + "\n";
+	 			} else { // no data for this week
+	 				if(j % TIME_CONST == 0) {
+		 				csvString += dataArray[i][0].name + ",";
+						csvString += j / TIME_CONST + ",";
+		 				csvString += monthCount + "\n";
+		 				monthCount = 0;
+		 			}
 	 			}
- 			} else {
- 				csvString += dataArray[i][0].name + ",";
-				csvString += j + ",";
- 				csvString += 0 + "\n";
+ 			} else { // out of data, but still need to fill in extra weeks
+ 				if(j % TIME_CONST == 0) {
+	 				csvString += dataArray[i][0].name + ",";
+					csvString += j/ TIME_CONST + ",";
+	 				csvString += 0 + "\n";
+
+	 			}
  			}
  		}
  	}
@@ -227,10 +242,11 @@ function loadName(name) {
     paths.on("mouseover", function() {
     	console.log(this);
     	d3.select(this).attr("stroke", "black");
-    	d3.select(this).attr("stroke-width", "3");
+    	d3.select(this).attr("stroke-width", function(d) {console.log(d); return 5;});
     });
         paths.on("mouseout", function() {
     	console.log(this);
+    	console.log(d3.select(this));
     	d3.select(this).attr("stroke", "white");
     	d3.select(this).attr("stroke-width", "0");
     });
