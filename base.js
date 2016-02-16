@@ -11,6 +11,7 @@ var week = -1;
 var maxPlayCount = 0;
 var csvString = "band,week,playcount\n";
 var loaded = false;
+var sortByConsistency = true;
 
 var parseDate = d3.time.format("%m/%d/%Y").parse;
 
@@ -38,6 +39,9 @@ function callLoadName() {
   if (newArtistNum.length > 0) {
     NUM_BANDS = newArtistNum;
   }
+
+  sortByConsistency = document.getElementById("consistency").checked;
+  console.log(sortByConsistency);
 
   if(!loaded) {
   	dataArray = [];
@@ -84,7 +88,8 @@ function loadGraph() {
 	startDate = new Date(startDate);
 	csvString = "band,week,playcount\n";
  	dataArray.sort(function(a, b) {
- 		return b.length - a.length;
+		if(sortByConsistency) return consistencySort(a, b);
+		else return sortByTotalPlayCount(a, b);
  	});
  	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
  		var index = 0;
@@ -294,7 +299,7 @@ function render(data){
   paths.enter().append("path").attr("class", "chart-line");
   paths.exit().remove();
   paths
-    .attr("d", function (d){ console.log(area(d.values)); return area(d.values); })
+    .attr("d", function (d){ return area(d.values); })
     .attr("fill", function (d){ return colorScale(d.key); });
 
   paths.on("mouseover", function(d) {
@@ -343,3 +348,21 @@ function type(d){
   d.playcount = +d.playcount;
   return d;
 }
+
+function sortByTotalPlayCount(a, b) {
+	var totalPlaysA = 0;
+  	for (var i = 0; i < a.length; i++) {
+  		totalPlaysA += parseInt(a[i].playCount);
+  	} 
+  	var totalPlaysB = 0;
+  	for (var i = 0; i < b.length; i++) {
+  		totalPlaysB += parseInt(b[i].playCount);
+  	}		
+  	return  totalPlaysB - totalPlaysA;
+}
+
+function consistencySort(a, b) {
+	return b.length - a.length;
+}
+
+
