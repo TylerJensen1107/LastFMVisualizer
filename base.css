@@ -16,6 +16,11 @@ body {
 	width : 400px;
 }
 
+#chart {
+	float: left;
+	clear: both;
+}
+
 div.tooltip {	
     position: absolute;			
     text-align: center;			
