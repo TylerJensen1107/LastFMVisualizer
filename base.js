@@ -2,8 +2,8 @@
 var dataArray = [];
 var bandNameArray = [];
 var bands = 0;
-var TIME_CONST = 52;
-var NUM_BANDS = 50;
+var TIME_CONST = 26;
+var NUM_BANDS = 10;
 
 var week = -1;
 var maxPlayCount = 0;
@@ -12,55 +12,56 @@ var csvString = "band,week,playcount\n";
 document.getElementById("submit").onclick = callLoadName;
 
 function callLoadName() {
-	loadName(document.getElementById("name").value);
-
 	document.getElementById("loading").style.display = "inline";
 	document.getElementById("loading").style.width = "50px";
 	document.getElementById("loading").style.height = "50px";
-	setTimeout(function() {
- 	dataArray.sort(function(a, b) {
- 		return b.length - a.length;
- 	});
- 	for(var i = 0; i < NUM_BANDS; i++) {
- 		var index = 0;
- 		var monthCount = 0;
- 		for(var j = 0; j < week; j++) {
- 			console.log(dataArray[i][j]);
- 			if(dataArray[i][index]) {
- 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
- 					if(j % TIME_CONST == 0) {
-			 			monthCount += parseInt(dataArray[i][index].playCount);
-			 			csvString += dataArray[i][index].name + ",";
-						csvString += j / TIME_CONST + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
-		 			} else {
-		 				monthCount += parseInt(dataArray[i][index].playCount);
+
+	$.when(loadName(document.getElementById("name").value)).done(function() {
+		console.log("all loaded");
+		console.log(dataArray);
+		console.log(week);
+	 	dataArray.sort(function(a, b) {
+	 		return b.length - a.length;
+	 	});
+	 	for(var i = 0; i < NUM_BANDS; i++) {
+	 		var index = 0;
+	 		var monthCount = 0;
+	 		for(var j = 0; j < week; j++) {
+	 			if(dataArray[i][index]) {
+	 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
+	 					if(j % TIME_CONST == 0) {
+				 			monthCount += parseInt(dataArray[i][index].playCount);
+				 			csvString += dataArray[i][index].name + ",";
+							csvString += j / TIME_CONST + ",";
+			 				csvString += monthCount + "\n";
+			 				monthCount = 0;
+			 			} else {
+			 				monthCount += parseInt(dataArray[i][index].playCount);
+			 			}
+		 				index++;
+		 			} else { // no data for this week
+		 				if(j % TIME_CONST == 0) {
+			 				csvString += dataArray[i][0].name + ",";
+							csvString += j / TIME_CONST + ",";
+			 				csvString += monthCount + "\n";
+			 				monthCount = 0;
+			 			}
 		 			}
-	 				index++;
-	 			} else { // no data for this week
+	 			} else { // out of data, but still need to fill in extra weeks
 	 				if(j % TIME_CONST == 0) {
 		 				csvString += dataArray[i][0].name + ",";
-						csvString += j / TIME_CONST + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
+						csvString += j/ TIME_CONST + ",";
+		 				csvString += 0 + "\n";
+
 		 			}
 	 			}
- 			} else { // out of data, but still need to fill in extra weeks
- 				if(j % TIME_CONST == 0) {
-	 				csvString += dataArray[i][0].name + ",";
-					csvString += j/ TIME_CONST + ",";
-	 				csvString += 0 + "\n";
+	 		}
+	 	}
+	 	console.log(csvString);
+	    render(d3.csv.parse(csvString, type));
+	    document.getElementById("loading").style.display = "none";
+	});
 
-	 			}
- 			}
- 		}
- 	}
- 	console.log(csvString);
-   render(d3.csv.parse(csvString, type));
-   document.getElementById("loading").style.display = "none";
-
-	}, 10000);
 
 }
 
@@ -72,10 +73,11 @@ function loadName(name) {
 		url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyChartList&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json",
 
 	}).done(function(data) {
+		console.log("loaded name data");
 
 		var requests = [];
 
-        requests.push(loadWeekData(data));
+        requests.push(loadWeekData(data, name));
 
         $.when.apply($, requests).then(function() { def.resolve(); });
 
@@ -84,51 +86,57 @@ function loadName(name) {
 	return def.promise();
 }
 
-var loadWeekData() {
+function loadWeekData(data, name) {
 
 	var def = $.Deferred(), requests = [];
 
 	$.each(data.weeklychartlist.chart, function(index, weeklyData) {
 		var to = weeklyData.to;
 		var from = weeklyData.from;
-		$.ajax({
-			url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json&from=" + from + "&to=" + to,
+		requests.push(
+			$.ajax({
+				url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json&from=" + from + "&to=" + to,
 
-		}).done(function(data) {
-			if(data.weeklyartistchart.artist.length > 0) {
-        		week++;
-  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
-  					.toLocaleDateString();
-  				var name = weeklyData.name;
-  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
+			}).done(function(data) {
+				if(data.weeklyartistchart.artist.length > 0) {
+	        		week++;
+		  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+		  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
+		  					.toLocaleDateString();
+		  				var name = weeklyData.name;
+		  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
 
-  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
+		  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
 
-   				if(!bandNameArray[name]) {
-  					bandNameArray[name] = {index: bands,
-  											  name: name};
-  					bands++;
+		   				if(!bandNameArray[name]) {
+		  					bandNameArray[name] = {index: bands,
+		  											  name: name};
+		  					bands++;
 
-  					dataArray.push([{name: weeklyData.name, 
-  												playCount: weeklyData.playcount,
-  												weekDate: date,
-  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-                          weekNumber: week
-                        }]);
+		  					dataArray.push([{name: weeklyData.name, 
+		  												playCount: weeklyData.playcount,
+		  												weekDate: date,
+		  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+		                          weekNumber: week
+		                        }]);
 
-  				} else {
-   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
-  												playCount: weeklyData.playcount,
-  												weekDate: date,
-  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-                          weekNumber: week
-                        });
-   				}
-  			});
-      	}
-		});
+		  				} else {
+		   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
+		  												playCount: weeklyData.playcount,
+		  												weekDate: date,
+		  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+		                          weekNumber: week
+		                    });
+		   				}
+		  			});
+      			}
+			})
+		);
 	});
+
+    $.when.apply($, requests).then(function() { def.resolve(); });
+
+    return def.promise();
 }
 
 // Responsible for setting the domain with the retrieved data
@@ -211,19 +219,17 @@ var loadWeekData() {
     .labelOffset(4);
 
   function render(data){
-  	 			console.log("here3");
+  	 			console.log("in Render");
 
     var nested = d3.nest()
       .key(function (d){ return d.band; })
       .entries(data);
 
-      console.log(nested);
      colorScale.domain(nested.map(function (d){ return d.key; }));
 
 
     // Reversed the order here so the order matches between legend & areas.
     var layers = stack(nested.reverse());
-    console.log(layers);
 
     xScale.domain(d3.extent(data, function (d){ return d.week; }));
         yScale.domain([
@@ -241,15 +247,12 @@ var loadWeekData() {
     paths
       .attr("d", function (d){ return area(d.values); })
       .attr("fill", function (d){ return colorScale(d.key); });
-    paths.append("svg:title").text(function(d) { console.log("Here"); return d.key; });
+    paths.append("svg:title").text(function(d) { return d.key; });
     paths.on("mouseover", function() {
-    	console.log(this);
     	d3.select(this).attr("stroke", "black");
-    	d3.select(this).attr("stroke-width", function(d) {console.log(d); return 5;});
+    	d3.select(this).attr("stroke-width", function(d) {return 5;});
     });
         paths.on("mouseout", function() {
-    	console.log(this);
-    	console.log(d3.select(this));
     	d3.select(this).attr("stroke", "white");
     	d3.select(this).attr("stroke-width", "0");
     });
