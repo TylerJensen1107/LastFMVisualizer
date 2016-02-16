@@ -81,8 +81,6 @@ function callLoadName() {
 	    render(d3.csv.parse(csvString, type));
 	    document.getElementById("loading").style.display = "none";
 	});
-
-
 }
 
 function loadName(name) {
@@ -158,12 +156,6 @@ function loadWeekData(data, name) {
 
   return def.promise();
 }
-
-// Responsible for setting the domain with the retrieved data
-// x.domain(dataArray.map(function(d) { return d.1/3/2016; }));
-// code omitted.
-// .on('mouseout', tip.hide)
-
 
 var outerWidth = 1000;
 var outerHeight = 500;
@@ -252,7 +244,6 @@ function render(data){
 
    colorScale.domain(nested.map(function (d){ return d.key; }));
 
-
   // Reversed the order here so the order matches between legend & areas.
   var layers = stack(nested.reverse());
 
@@ -308,18 +299,25 @@ function render(data){
   yAxisG.call(yAxis);
 
   colorLegendG.call(colorLegend);
+
+  // Populating artist dropdown selector
+  // for (var i = 0; i < bandNameArray.length; i++) {
+  // 	console.log(bandNameArray[i]);
+  // }
+
+  for (var key in bandNameArray) {
+    // skip loop if the property is from prototype
+    if (!bandNameArray.hasOwnProperty(key)) continue;
+
+    var obj = bandNameArray[key];
+    for (var prop in obj) {
+        // skip loop if the property is from prototype
+        if(!obj.hasOwnProperty(prop)) continue;
+
+        // Gets all artist names
+        console.log(obj.name);
+    }
 }
-
-function brushed() {
-  var value = brush.extent()[0];
-
-  if (d3.event.sourceEvent) { // not a programmatic event
-    value = xAxis.invert(d3.mouse(this)[0]);
-    brush.extent([value, value]);
-  }
-
-  handle.attr("cx", x(value));
-  d3.select("body").style("background-color", d3.hsl(value, .8, .8));
 }
 
 function type(d){
