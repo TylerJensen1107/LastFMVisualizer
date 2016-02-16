@@ -341,12 +341,55 @@ function render(data){
   }
 }
 
+// Called when user selects user. Function to gather name selected and data on that artist
 function artistSelected() {
-  var artist = $("#artistSelector").val();
-  console.log("Artist Selected : " + artist);
+  // Gets the artist selected
+  var artistName = $("#artistSelector").val();
+  artistName = artistName.replace("_", " ");
 
-  
+  // Gets the data about that artist
+  var artistData = [];
+  var counter = 0;
+  while(artistData.length == 0) {
+    if(dataArray[counter][0].name == artistName) {
+      artistData = dataArray[counter];
+    }
+    counter++;
+  }
+  console.log(artistData);
+
+  // Makes the artist chart
+  // renderArtistChart(artistName);
 }
+
+// Makes the artist chart
+// function renderArtistChart() {
+//   var margin = {top: 20, right: 20, bottom: 30, left: 50},
+//     width = 960 - margin.left - margin.right,
+//     height = 500 - margin.top - margin.bottom;
+
+//   var parseDate = d3.time.format("%d-%b-%y").parse;
+
+//   var x = d3.time.scale()
+//     .range([0, width]);
+
+//   var y = d3.scale.linear()
+//     .range([height, 0]);
+
+//   var xAxis = d3.svg.axis()
+//     .scale(x)
+//     .orient("bottom");
+
+//   var yAxis = d3.svg.axis()
+//     .scale(y)
+//     .orient("left");
+
+//   var svg = d3.select("#chart").append("svg")
+//     .attr("width", outerWidth)
+//     .attr("height", outerHeight);
+//   var g = svg.append("g")
+//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+// }
 
 function type(d){
   d.week = +d.week;
