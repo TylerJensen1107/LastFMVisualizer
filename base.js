@@ -278,7 +278,7 @@ function render(data){
   	for (var i = 0; i < d.values.length; i++) {
   		totalPlays += d.values[i].playcount;
   	}
-  	return d.key + "\nMax play count: " + totalPlays;
+  	return d.key + "\nPlay count: " + totalPlays;
   });
 
   paths.on("mouseover", function() {
@@ -295,6 +295,18 @@ function render(data){
   yAxisG.call(yAxis);
 
   colorLegendG.call(colorLegend);
+}
+
+function brushed() {
+  var value = brush.extent()[0];
+
+  if (d3.event.sourceEvent) { // not a programmatic event
+    value = xAxis.invert(d3.mouse(this)[0]);
+    brush.extent([value, value]);
+  }
+
+  handle.attr("cx", x(value));
+  d3.select("body").style("background-color", d3.hsl(value, .8, .8));
 }
 
 function type(d){
