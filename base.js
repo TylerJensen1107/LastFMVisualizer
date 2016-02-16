@@ -3,7 +3,7 @@ var dataArray = [];
 var bandNameArray = [];
 var bands = 0;
 var TIME_CONST = 52;
-var NUM_BANDS = 50;
+var NUM_BANDS = 10;
 
 var week = -1;
 var maxPlayCount = 0;
@@ -13,6 +13,12 @@ document.getElementById("submit").onclick = callLoadName;
 
 function callLoadName() {
 	loadName(document.getElementById("name").value);
+  var newTimeConst = document.getElementById("timeConst").value;
+  
+  if (newTimeConst.length > 0) {
+    TIME_CONST = newTimeConst;
+    console.log("NEW TIME " + TIME_CONST);
+  }
 
 	document.getElementById("loading").style.display = "inline";
 	document.getElementById("loading").style.width = "50px";
@@ -238,7 +244,7 @@ function loadName(name) {
     paths
       .attr("d", function (d){ return area(d.values); })
       .attr("fill", function (d){ return colorScale(d.key); });
-    paths.append("svg:title").text(function(d) { console.log("Here"); return d.key; });
+    paths.append("svg:title").text(function(d) { console.log("Here"); return d.key + "\n" + d.values; });
     paths.on("mouseover", function() {
     	console.log(this);
     	d3.select(this).attr("stroke", "black");

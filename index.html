@@ -1,7 +1,9 @@
 <html>
 <head>
-	<style> /* set the CSS */
 
+<link rel="stylesheet" type="text/css" href="base.css">
+
+<style> /* set the CSS */
 body { font: 12px Arial;}
 
 .axis path,
@@ -11,12 +13,20 @@ body { font: 12px Arial;}
     stroke-width: 1;
     shape-rendering: crispEdges;
 }
-
 </style>
+
 	<title>Last FM Visualizer</title>
 </head>
 <body>
-    <input id="name" type="text"><input id="submit" type="submit">
+    <span class="container">Number of weeks: 
+        <input id="timeConst" type="text">
+    </span>
+    <br>
+    <br>
+    <span class="container">Last.fm username: 
+        <input id="name" type="text"><input id="submit" type="submit">
+    </span>
+
     <img id="loading" src="loading.gif" style="display: none">
 
 </body>
