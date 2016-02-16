@@ -2,7 +2,7 @@
 var dataArray = [];
 var bandNameArray = [];
 var bands = 0;
-var TIME_CONST = 52;
+var TIME_CONST = 26;
 var NUM_BANDS = 10;
 
 var week = -1;
@@ -12,7 +12,13 @@ var csvString = "band,week,playcount\n";
 document.getElementById("submit").onclick = callLoadName;
 
 function callLoadName() {
-	loadName(document.getElementById("name").value);
+  // Removes all data from graph
+  svg.selectAll(".chart-line").remove();
+
+  var username = document.getElementById("name").value;
+
+	loadName(username);
+
   var newTimeConst = document.getElementById("timeConst").value;
   
   if (newTimeConst.length > 0) {
@@ -20,118 +26,137 @@ function callLoadName() {
     console.log("NEW TIME " + TIME_CONST);
   }
 
+  var newArtistNum = document.getElementById("numArtists").value;
+  if (newArtistNum.length > 0) {
+    NUM_BANDS = newArtistNum;
+    console.log("NEW NUM ARTISTS " + NUM_BANDS);
+  }
+
 	document.getElementById("loading").style.display = "inline";
 	document.getElementById("loading").style.width = "50px";
 	document.getElementById("loading").style.height = "50px";
-	setTimeout(function() {
- 	dataArray.sort(function(a, b) {
- 		return b.length - a.length;
- 	});
- 	for(var i = 0; i < NUM_BANDS; i++) {
- 		var index = 0;
- 		var monthCount = 0;
- 		for(var j = 0; j < week; j++) {
- 			console.log(dataArray[i][j]);
- 			if(dataArray[i][index]) {
- 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
- 					if(j % TIME_CONST == 0) {
-			 			monthCount += parseInt(dataArray[i][index].playCount);
-			 			csvString += dataArray[i][index].name + ",";
-						csvString += j / TIME_CONST + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
-		 			} else {
-		 				monthCount += parseInt(dataArray[i][index].playCount);
+
+	$.when(loadName(document.getElementById("name").value)).done(function() {
+		console.log("all loaded");
+		console.log(dataArray);
+		console.log(week);
+	 	dataArray.sort(function(a, b) {
+	 		return b.length - a.length;
+	 	});
+	 	for(var i = 0; i < NUM_BANDS; i++) {
+	 		var index = 0;
+	 		var monthCount = 0;
+	 		for(var j = 0; j < week; j++) {
+	 			if(dataArray[i][index]) {
+	 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
+	 					if(j % TIME_CONST == 0) {
+				 			monthCount += parseInt(dataArray[i][index].playCount);
+				 			csvString += dataArray[i][index].name + ",";
+							csvString += j / TIME_CONST + ",";
+			 				csvString += monthCount + "\n";
+			 				monthCount = 0;
+			 			} else {
+			 				monthCount += parseInt(dataArray[i][index].playCount);
+			 			}
+		 				index++;
+		 			} else { // no data for this week
+		 				if(j % TIME_CONST == 0) {
+			 				csvString += dataArray[i][0].name + ",";
+							csvString += j / TIME_CONST + ",";
+			 				csvString += monthCount + "\n";
+			 				monthCount = 0;
+			 			}
 		 			}
-	 				index++;
-	 			} else { // no data for this week
+	 			} else { // out of data, but still need to fill in extra weeks
 	 				if(j % TIME_CONST == 0) {
 		 				csvString += dataArray[i][0].name + ",";
-						csvString += j / TIME_CONST + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
+						csvString += j/ TIME_CONST + ",";
+		 				csvString += 0 + "\n";
+
 		 			}
 	 			}
- 			} else { // out of data, but still need to fill in extra weeks
- 				if(j % TIME_CONST == 0) {
-	 				csvString += dataArray[i][0].name + ",";
-					csvString += j/ TIME_CONST + ",";
-	 				csvString += 0 + "\n";
+	 		}
+	 	}
+	 	console.log(csvString);
+	    render(d3.csv.parse(csvString, type));
+	    document.getElementById("loading").style.display = "none";
+	});
 
-	 			}
- 			}
- 		}
- 	}
- 	console.log(csvString);
-   render(d3.csv.parse(csvString, type));
-   document.getElementById("loading").style.display = "none";
-
-	}, 10000);
 
 }
 
 function loadName(name) {
+
+	var def = $.Deferred();
+
 	$.ajax({
 		url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyChartList&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json",
 
 	}).done(function(data) {
-		$.each(data.weeklychartlist.chart, function(index, weeklyData) {
-			var to = weeklyData.to;
-			var from = weeklyData.from;
+		console.log("loaded name data");
+
+		var requests = [];
+
+        requests.push(loadWeekData(data, name));
+
+        $.when.apply($, requests).then(function() { def.resolve(); });
+
+	});
+
+	return def.promise();
+}
+
+function loadWeekData(data, name) {
+
+	var def = $.Deferred(), requests = [];
+
+	$.each(data.weeklychartlist.chart, function(index, weeklyData) {
+		var to = weeklyData.to;
+		var from = weeklyData.from;
+		requests.push(
 			$.ajax({
 				url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyArtistChart&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json&from=" + from + "&to=" + to,
 
 			}).done(function(data) {
 				if(data.weeklyartistchart.artist.length > 0) {
-	        week++;
-	  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-	  				// if(!dataArray[weeklyData.name])
-	  				// 	dataArray[weeklyData.name] = [];
-	   			// 	dataArray[weeklyData.name].push({date: data.weeklyartistchart['@attr'].to, 
-	  				// 								playCount: weeklyData.playcount});
+	        		week++;
+		  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
+		  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
+		  					.toLocaleDateString();
+		  				var name = weeklyData.name;
+		  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
 
-	  				// Converts string of date in seconds to MM/DD/YYYY
-	  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
-	  					.toLocaleDateString();
-	  				var name = weeklyData.name;
-	  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
+		  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
 
-	  				if(weeklyData.playcount > maxPlayCount) maxPlayCount = weeklyData.playcount;
+		   				if(!bandNameArray[name]) {
+		  					bandNameArray[name] = {index: bands,
+		  											  name: name};
+		  					bands++;
 
-	   				if(!bandNameArray[name]) {
-	  					bandNameArray[name] = {index: bands,
-	  											  name: name};
-	  					bands++;
+		  					dataArray.push([{name: weeklyData.name, 
+		  												playCount: weeklyData.playcount,
+		  												weekDate: date,
+		  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+		                          weekNumber: week
+		                        }]);
 
-	  					dataArray.push([{name: weeklyData.name, 
-	  												playCount: weeklyData.playcount,
-	  												weekDate: date,
-	  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-	                          weekNumber: week
-	                        }]);
-
-	  				} else {
-	   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
-	  												playCount: weeklyData.playcount,
-	  												weekDate: date,
-	  												dateInSeconds: data.weeklyartistchart['@attr'].to,
-	                          weekNumber: week
-	                        });
-	   				}
-	  			});
-
-	    			// console.log(data);
-	       //          if(data.weeklyartistchart.artist.length > 0) week++;
-	    			// $.each(data.weeklyartistchart.artist, function(index, weeklyData) {
-	    			// 	if(!dataArray[week])
-	    			// 		dataArray[week] = [];
-	     		// 		dataArray[week].push({artist: weeklyData.name, 
-	    			// 									 playCount: weeklyData.playcount});
-	    			// });
-	      }
-			});
-		});
+		  				} else {
+		   					dataArray[bandNameArray[name].index].push({name: weeklyData.name, 
+		  												playCount: weeklyData.playcount,
+		  												weekDate: date,
+		  												dateInSeconds: data.weeklyartistchart['@attr'].to,
+		                          weekNumber: week
+		                    });
+		   				}
+		  			});
+      			}
+			})
+		);
 	});
+
+  $.when.apply($, requests).then(function() { def.resolve(); });
+
+  return def.promise();
 }
 
 // Responsible for setting the domain with the retrieved data
@@ -140,133 +165,127 @@ function loadName(name) {
 // .on('mouseout', tip.hide)
 
 
-  var outerWidth = 1000;
-  var outerHeight = 500;
-  var margin = { left: 55, top: 5, right: 100, bottom: 60 };
+var outerWidth = 1000;
+var outerHeight = 500;
+var margin = { left: 55, top: 5, right: 100, bottom: 60 };
 
-  var xColumn = "weekNumber";
-  var yColumn = "listens";
-  var colorColumn = "country";
-  var areaColumn = colorColumn;
+var xColumn = "weekNumber";
+var yColumn = "listens";
+var colorColumn = "country";
+var areaColumn = colorColumn;
 
-  var xAxisLabelText = "Week";
-  var xAxisLabelOffset = 48;
+var xAxisLabelText = "Week";
+var xAxisLabelOffset = 48;
 
-  var yAxisLabelText = "Listens";
-  var yAxisLabelOffset = 35;
+var yAxisLabelText = "Listens";
+var yAxisLabelOffset = 35;
 
-  var innerWidth  = outerWidth  - margin.left - margin.right;
-  var innerHeight = outerHeight - margin.top  - margin.bottom;
+var innerWidth  = outerWidth  - margin.left - margin.right;
+var innerHeight = outerHeight - margin.top  - margin.bottom;
 
-  var svg = d3.select("body").append("svg")
-    .attr("width", outerWidth)
-    .attr("height", outerHeight);
-  var g = svg.append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var svg = d3.select("#chart").append("svg")
+  .attr("width", outerWidth)
+  .attr("height", outerHeight);
+var g = svg.append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var xAxisG = g.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + innerHeight + ")")
-  var xAxisLabel = xAxisG.append("text")
-    .style("text-anchor", "middle")
-    .attr("transform", "translate(" + (innerWidth / 2) + "," + xAxisLabelOffset + ")")
-    .attr("class", "label")
-    .text(xAxisLabelText);
+var xAxisG = g.append("g")
+  .attr("class", "x axis")
+  .attr("transform", "translate(0," + innerHeight + ")")
+var xAxisLabel = xAxisG.append("text")
+  .style("text-anchor", "middle")
+  .attr("transform", "translate(" + (innerWidth / 2) + "," + xAxisLabelOffset + ")")
+  .attr("class", "label")
+  .text(xAxisLabelText);
 
-  var yAxisG = g.append("g")
-    .attr("class", "y axis");
-  var yAxisLabel = yAxisG.append("text")
-    .style("text-anchor", "middle")
-    .attr("transform", "translate(-" + yAxisLabelOffset + "," + (innerHeight / 2) + ") rotate(-90)")
-    .attr("class", "label")
-    .text(yAxisLabelText);
+var yAxisG = g.append("g")
+  .attr("class", "y axis");
+var yAxisLabel = yAxisG.append("text")
+  .style("text-anchor", "middle")
+  .attr("transform", "translate(-" + yAxisLabelOffset + "," + (innerHeight / 2) + ") rotate(-90)")
+  .attr("class", "label")
+  .text(yAxisLabelText);
 
-  var colorLegendG = svg.append("g")
-    .attr("class", "color-legend")
-    .attr("transform", "translate("+ (outerWidth - 100) + ", 5)");
+var colorLegendG = svg.append("g")
+  .attr("class", "color-legend")
+  .attr("transform", "translate("+ (outerWidth - 100) + ", 5)");
 
-  var xScale = d3.scale.linear().range([0, innerWidth]);
-  var yScale = d3.scale.linear().range([innerHeight, 0]);
-  var colorScale = d3.scale.category20();
-
-
-  var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
-    .ticks(5)
-    .outerTickSize(0);
-  var yAxis = d3.svg.axis().scale(yScale).orient("left")
-    .ticks(5)
-    .outerTickSize(0);
-
-  var stack = d3.layout.stack()
-    .y(function (d){ return d.playcount; })
-    .values(function (d){ return d.values; });
-
-  var area = d3.svg.area()
-    .x(function(d) { return xScale(d.week); })
-    .y0(function(d) { return yScale(d.y0); })
-    .y1(function(d) { return yScale(d.y0 + d.y); });
-    
-  var colorLegend = d3.legend.color()
-    .scale(colorScale)
-    .shapePadding(3)
-    .shapeWidth(15)
-    .shapeHeight(15)
-    .labelOffset(4);
-
-  function render(data){
-  	 			console.log("here3");
-
-    var nested = d3.nest()
-      .key(function (d){ return d.band; })
-      .entries(data);
-
-      console.log(nested);
-     colorScale.domain(nested.map(function (d){ return d.key; }));
+var xScale = d3.scale.linear().range([0, innerWidth]);
+var yScale = d3.scale.linear().range([innerHeight, 0]);
+var colorScale = d3.scale.category20();
 
 
-    // Reversed the order here so the order matches between legend & areas.
-    var layers = stack(nested.reverse());
-    console.log(layers);
+var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
+  .ticks(5)
+  .outerTickSize(0);
+var yAxis = d3.svg.axis().scale(yScale).orient("left")
+  .ticks(5)
+  .outerTickSize(0);
 
-    xScale.domain(d3.extent(data, function (d){ return d.week; }));
-        yScale.domain([
-          0,
-          d3.max(layers, function (layer){
-            return d3.max(layer.values, function (d){
-              return d.y0 + d.y;
-            });
-          })
-        ]);
+var stack = d3.layout.stack()
+  .y(function (d){ return d.playcount; })
+  .values(function (d){ return d.values; });
 
-    var paths = g.selectAll(".chart-area").data(layers);
-    paths.enter().append("path").attr("class", "chart-line");
-    paths.exit().remove();
-    paths
-      .attr("d", function (d){ return area(d.values); })
-      .attr("fill", function (d){ return colorScale(d.key); });
-    paths.append("svg:title").text(function(d) { console.log("Here"); return d.key + "\n" + d.values; });
-    paths.on("mouseover", function() {
-    	console.log(this);
-    	d3.select(this).attr("stroke", "black");
-    	d3.select(this).attr("stroke-width", function(d) {console.log(d); return 5;});
-    });
-        paths.on("mouseout", function() {
-    	console.log(this);
-    	console.log(d3.select(this));
-    	d3.select(this).attr("stroke", "white");
-    	d3.select(this).attr("stroke-width", "0");
-    });
+var area = d3.svg.area()
+  .x(function(d) { return xScale(d.week); })
+  .y0(function(d) { return yScale(d.y0); })
+  .y1(function(d) { return yScale(d.y0 + d.y); });
+  
+var colorLegend = d3.legend.color()
+  .scale(colorScale)
+  .shapePadding(3)
+  .shapeWidth(15)
+  .shapeHeight(15)
+  .labelOffset(4);
+
+function render(data){
+	 			console.log("in Render");
+
+  var nested = d3.nest()
+    .key(function (d){ return d.band; })
+    .entries(data);
+
+   colorScale.domain(nested.map(function (d){ return d.key; }));
 
 
-    xAxisG.call(xAxis);
-    yAxisG.call(yAxis);
+  // Reversed the order here so the order matches between legend & areas.
+  var layers = stack(nested.reverse());
 
-    colorLegendG.call(colorLegend);
-  }
+  xScale.domain(d3.extent(data, function (d){ return d.week; }));
+      yScale.domain([
+        0,
+        d3.max(layers, function (layer){
+          return d3.max(layer.values, function (d){
+            return d.y0 + d.y;
+          });
+        })
+      ]);
 
-  function type(d){
-    d.week = +d.week;
-    d.playcount = +d.playcount;
-    return d;
-  }
+  var paths = g.selectAll(".chart-area").data(layers);
+  paths.enter().append("path").attr("class", "chart-line");
+  paths.exit().remove();
+  paths
+    .attr("d", function (d){ return area(d.values); })
+    .attr("fill", function (d){ return colorScale(d.key); });
+  paths.append("svg:title").text(function(d) { return d.key; });
+  paths.on("mouseover", function() {
+  	d3.select(this).attr("stroke", "black");
+  	d3.select(this).attr("stroke-width", function(d) {return 5;});
+  });
+      paths.on("mouseout", function() {
+  	d3.select(this).attr("stroke", "white");
+  	d3.select(this).attr("stroke-width", "0");
+  });
 
+
+  xAxisG.call(xAxis);
+  yAxisG.call(yAxis);
+
+  colorLegendG.call(colorLegend);
+}
+
+function type(d){
+  d.week = +d.week;
+  d.playcount = +d.playcount;
+  return d;
+}

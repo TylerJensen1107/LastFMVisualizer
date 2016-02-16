@@ -18,16 +18,19 @@ body { font: 12px Arial;}
 	<title>Last FM Visualizer</title>
 </head>
 <body>
-    <span class="container">Number of weeks: 
+    <div class="container">Number of weeks: 
         <input id="timeConst" type="text">
-    </span>
-    <br>
-    <br>
-    <span class="container">Last.fm username: 
+    </div>
+    <div class="container">Max number of artists: 
+        <input id="numArtists" type="text">
+    </div>
+    <div class="container">Last.fm username: 
         <input id="name" type="text"><input id="submit" type="submit">
-    </span>
+    </div>
 
     <img id="loading" src="loading.gif" style="display: none">
+
+    <div id="chart"><div>
 
 </body>
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>

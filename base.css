@@ -3,7 +3,8 @@ body {
 }
 
 .container {
-	margin-top: 20px;
+	float: left;
+	margin-left: 10px;
 }
 
 #submit {
