@@ -283,10 +283,13 @@ function render(data){
   	for (var i = 0; i < d.values.length; i++) {
   		totalPlays += d.values[i].playcount;
   	}
+  	var textLength = (d.key + "<br>Play count: " + totalPlays).length;
+
   	div.transition()		
        .duration(200)		
        .style("opacity", .9);		
-    div.html(d.key + "<br>Play count: " + totalPlays)	
+    div.html(d.key + "<br>Play count: " + totalPlays)
+    	.style("height", textLength * 1.2 + "px")	
         .style("left", (d3.event.pageX) + "px")		
         .style("top", (d3.event.pageY - 28) + "px");	
   	d3.select(this).attr("stroke", "black");
