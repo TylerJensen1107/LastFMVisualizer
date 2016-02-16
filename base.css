@@ -1,5 +1,6 @@
 body {
 	margin-top: 20px;
+	padding-top: 20px;
 }
 
 .container {
@@ -9,4 +10,8 @@ body {
 
 #submit {
 	margin-left: 10px;
+}
+
+.slider {
+	width : 400px;
 }

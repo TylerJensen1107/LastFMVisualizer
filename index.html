@@ -1,6 +1,7 @@
 <html>
 <head>
 
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
 <link rel="stylesheet" type="text/css" href="base.css">
 
 <style> /* set the CSS */
@@ -13,18 +14,27 @@ body { font: 12px Arial;}
     stroke-width: 1;
     shape-rendering: crispEdges;
 }
+
+
 </style>
 
 	<title>Last FM Visualizer</title>
 </head>
 <body>
+    <div class = "container slider">
       <label for="points">Group Weeks:</label>
       <input type="range" name="points" id="timeConst" value="4" min="1" max="52" data-show-value="true">
+  </div>
+
     <div class="container">Max number of artists: 
         <input id="numArtists" type="text">
     </div>
     <div class="container">Last.fm username: 
-        <input id="name" type="text"><input id="submit" type="submit">
+        <input id="name" type="text">
+    </div>
+
+    <div class="container">
+                <input id="submit" value="submit" type="submit">
     </div>
 
     <img id="loading" src="loading.gif" style="display: none">
@@ -36,4 +46,5 @@ body { font: 12px Arial;}
 	<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.1.0/d3-legend.js"></script>
 	<script type="text/javascript" src="base.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 </html>

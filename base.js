@@ -12,7 +12,7 @@ var csvString = "band,week,playcount\n";
 var loaded = false;
 
 document.getElementById("submit").onclick = callLoadName;
-document.getElementById("timeConst").onchange = callLoadName;
+document.getElementById("timeConst").onchange = console.log("change");
 
 function callLoadName() {
   // Removes all data from graph
