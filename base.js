@@ -15,6 +15,7 @@ document.getElementById("submit").onclick = callLoadName;
 function callLoadName() {
   // Removes all data from graph
   svg.selectAll(".chart-line").remove();
+  svg.selectAll(".chart-area").remove();
 
   var username = document.getElementById("name").value;
 
@@ -43,7 +44,6 @@ function callLoadName() {
    } else {
 	loadGraph();
     }
-
 
 }
 
@@ -263,7 +263,6 @@ function render(data){
 
   // Reversed the order here so the order matches between legend & areas.
   var layers = stack(nested.reverse());
-
   xScale.domain(d3.extent(data, function (d){ return d.week; }));
       yScale.domain([
         0,
