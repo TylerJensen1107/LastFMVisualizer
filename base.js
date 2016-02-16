@@ -8,6 +8,7 @@ var NUM_BANDS = 10;
 var week = -1;
 var maxPlayCount = 0;
 var csvString = "band,week,playcount\n";
+var loaded = false;
 
 document.getElementById("submit").onclick = callLoadName;
 
@@ -16,8 +17,6 @@ function callLoadName() {
   svg.selectAll(".chart-line").remove();
 
   var username = document.getElementById("name").value;
-
-	loadName(username);
 
   var newTimeConst = document.getElementById("timeConst").value;
   
@@ -32,55 +31,18 @@ function callLoadName() {
     console.log("NEW NUM ARTISTS " + NUM_BANDS);
   }
 
+  if(!loaded) {
 	document.getElementById("loading").style.display = "inline";
 	document.getElementById("loading").style.width = "50px";
 	document.getElementById("loading").style.height = "50px";
 
 	$.when(loadName(document.getElementById("name").value)).done(function() {
-		console.log("all loaded");
-		console.log(dataArray);
-		console.log(week);
-	 	dataArray.sort(function(a, b) {
-	 		return b.length - a.length;
-	 	});
-	 	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
-	 		var index = 0;
-	 		var monthCount = 0;
-	 		for(var j = 0; j < week; j++) {
-	 			if(dataArray[i][index]) {
-	 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
-	 					if(j % TIME_CONST == 0) {
-				 			monthCount += parseInt(dataArray[i][index].playCount);
-				 			csvString += dataArray[i][index].name + ",";
-							csvString += j / TIME_CONST + ",";
-			 				csvString += monthCount + "\n";
-			 				monthCount = 0;
-			 			} else {
-			 				monthCount += parseInt(dataArray[i][index].playCount);
-			 			}
-		 				index++;
-		 			} else { // no data for this week
-		 				if(j % TIME_CONST == 0) {
-			 				csvString += dataArray[i][0].name + ",";
-							csvString += j / TIME_CONST + ",";
-			 				csvString += monthCount + "\n";
-			 				monthCount = 0;
-			 			}
-		 			}
-	 			} else { // out of data, but still need to fill in extra weeks
-	 				if(j % TIME_CONST == 0) {
-		 				csvString += dataArray[i][0].name + ",";
-						csvString += j/ TIME_CONST + ",";
-		 				csvString += 0 + "\n";
-
-		 			}
-	 			}
-	 		}
-	 	}
-	 	console.log(csvString);
-	    render(d3.csv.parse(csvString, type));
-	    document.getElementById("loading").style.display = "none";
+		loaded = true;
+		loadGraph();
 	});
+   } else {
+	loadGraph();
+    }
 
 
 }
@@ -104,6 +66,52 @@ function loadName(name) {
 	});
 
 	return def.promise();
+}
+
+function loadGraph() {
+	console.log("all loaded");
+	console.log(dataArray);
+	console.log(week);
+ 	dataArray.sort(function(a, b) {
+ 		return b.length - a.length;
+ 	});
+ 	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
+ 		var index = 0;
+ 		var monthCount = 0;
+ 		for(var j = 0; j < week; j++) {
+ 			if(dataArray[i][index]) {
+ 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
+ 					if(j % TIME_CONST == 0) {
+			 			monthCount += parseInt(dataArray[i][index].playCount);
+			 			csvString += dataArray[i][index].name + ",";
+						csvString += j / TIME_CONST + ",";
+		 				csvString += monthCount + "\n";
+		 				monthCount = 0;
+		 			} else {
+		 				monthCount += parseInt(dataArray[i][index].playCount);
+		 			}
+	 				index++;
+	 			} else { // no data for this week
+	 				if(j % TIME_CONST == 0) {
+		 				csvString += dataArray[i][0].name + ",";
+						csvString += j / TIME_CONST + ",";
+		 				csvString += monthCount + "\n";
+		 				monthCount = 0;
+		 			}
+	 			}
+ 			} else { // out of data, but still need to fill in extra weeks
+ 				if(j % TIME_CONST == 0) {
+	 				csvString += dataArray[i][0].name + ",";
+					csvString += j/ TIME_CONST + ",";
+	 				csvString += 0 + "\n";
+
+	 			}
+ 			}
+ 		}
+ 	}
+ 	console.log(csvString);
+    render(d3.csv.parse(csvString, type));
+    document.getElementById("loading").style.display = "none";
 }
 
 function loadWeekData(data, name) {
