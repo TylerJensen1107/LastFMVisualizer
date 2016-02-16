@@ -5,14 +5,16 @@ var bands = 0;
 var TIME_CONST = 26;
 var NUM_BANDS = 10;
 var currUser;
+var startDate = null;
 
 var week = -1;
 var maxPlayCount = 0;
 var csvString = "band,week,playcount\n";
 var loaded = false;
 
+var parseDate = d3.time.format("%m/%d/%Y").parse;
+
 document.getElementById("submit").onclick = callLoadName;
-document.getElementById("timeConst").onchange = console.log("change");
 
 function callLoadName() {
   // Removes all data from graph
@@ -20,8 +22,6 @@ function callLoadName() {
 
   var username = document.getElementById("name").value;
 
-  console.log(username);
-  console.log(currUser);
   if(currUser && currUser != username) {
   	loaded = false;
   	currUser = username;
@@ -45,6 +45,7 @@ function callLoadName() {
   	bands = 0;
   	week = -1;
   	maxPlayCount = 0;
+  	startDate = null;
 	document.getElementById("loading").style.display = "inline";
 	document.getElementById("loading").style.width = "50px";
 	document.getElementById("loading").style.height = "50px";
@@ -67,7 +68,6 @@ function loadName(name) {
 		url: "http://ws.audioscrobbler.com/2.0/?method=user.getWeeklyChartList&api_key=5e2801138b4ef76aeb794a9469cb3687&user=" + name + "&format=json",
 
 	}).done(function(data) {
-		console.log("loaded name data");
 
 		var requests = [];
 
@@ -81,9 +81,7 @@ function loadName(name) {
 }
 
 function loadGraph() {
-	console.log("all loaded");
-	console.log(dataArray);
-	console.log(week);
+	startDate = new Date(startDate);
 	csvString = "band,week,playcount\n";
  	dataArray.sort(function(a, b) {
  		return b.length - a.length;
@@ -91,13 +89,15 @@ function loadGraph() {
  	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
  		var index = 0;
  		var monthCount = 0;
+ 		var currDate = new Date(startDate.toLocaleDateString());
  		for(var j = 0; j < week; j++) {
+ 			currDate.setDate(currDate.getDate() + 7);
  			if(dataArray[i][index]) {
  				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
  					if(j % TIME_CONST == 0) {
 			 			monthCount += parseInt(dataArray[i][index].playCount);
 			 			csvString += dataArray[i][index].name + ",";
-						csvString += j / TIME_CONST + ",";
+						csvString += currDate.toLocaleDateString() + ",";
 		 				csvString += monthCount + "\n";
 		 				monthCount = 0;
 		 			} else {
@@ -107,7 +107,7 @@ function loadGraph() {
 	 			} else { // no data for this week
 	 				if(j % TIME_CONST == 0) {
 		 				csvString += dataArray[i][0].name + ",";
-						csvString += j / TIME_CONST + ",";
+						csvString += currDate.toLocaleDateString() + ",";
 		 				csvString += monthCount + "\n";
 		 				monthCount = 0;
 		 			}
@@ -115,14 +115,13 @@ function loadGraph() {
  			} else { // out of data, but still need to fill in extra weeks
  				if(j % TIME_CONST == 0) {
 	 				csvString += dataArray[i][0].name + ",";
-					csvString += j/ TIME_CONST + ",";
+					csvString += currDate.toLocaleDateString() + ",";
 	 				csvString += 0 + "\n";
 
 	 			}
  			}
  		}
  	}
- 	console.log(csvString);
     render(d3.csv.parse(csvString, type));
     document.getElementById("loading").style.display = "none";
 }
@@ -144,6 +143,7 @@ function loadWeekData(data, name) {
 		  			$.each(data.weeklyartistchart.artist, function(index, weeklyData) {
 		  				var date = new Date(data.weeklyartistchart['@attr'].to * 1000)
 		  					.toLocaleDateString();
+		  				if(!startDate) startDate = date;
 		  				var name = weeklyData.name;
 		  				//csvString += name + "," + week + "," + weeklyData.playcount +"\n";
 
@@ -187,8 +187,6 @@ function loadWeekData(data, name) {
 
 
 function render(data){
-	 			console.log("in Render");
-	 			console.log(data);
 
 	var outerWidth = 1000;
 	var outerHeight = 500;
@@ -233,9 +231,9 @@ function render(data){
 
 	var colorLegendG = svg.append("g")
 	  .attr("class", "color-legend")
-	  .attr("transform", "translate("+ (outerWidth - 100) + ", 5)");
+	  .attr("transform", "translate("+ (outerWidth - 80) + ", 5)");
 
-	var xScale = d3.scale.linear().range([0, innerWidth]);
+	var xScale = d3.time.scale().range([0, innerWidth]);
 	var yScale = d3.scale.linear().range([innerHeight, 0]);
 	var colorScale = d3.scale.category20();
 
@@ -257,7 +255,7 @@ function render(data){
 	  .values(function (d){ return d.values; });
 
 	var area = d3.svg.area()
-	  .x(function(d) { return xScale(d.week); })
+	  .x(function(d) { return xScale(d.week); xScale(d.week); })
 	  .y0(function(d) { return yScale(d.y0); })
 	  .y1(function(d) { return yScale(d.y0 + d.y); });
 	  
@@ -296,7 +294,7 @@ function render(data){
   paths.enter().append("path").attr("class", "chart-line");
   paths.exit().remove();
   paths
-    .attr("d", function (d){ return area(d.values); })
+    .attr("d", function (d){ console.log(area(d.values)); return area(d.values); })
     .attr("fill", function (d){ return colorScale(d.key); });
 
   paths.on("mouseover", function(d) {
@@ -341,7 +339,7 @@ function brushed() {
 }
 
 function type(d){
-  d.week = +d.week;
+  d.week = parseDate(d.week);
   d.playcount = +d.playcount;
   return d;
 }
