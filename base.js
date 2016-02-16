@@ -266,6 +266,11 @@ function render(data){
         })
       ]);
 
+  // Define the div for the tooltip
+  var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+
   var paths = g.selectAll(".chart-area").data(layers);
   paths.enter().append("path").attr("class", "chart-line");
   paths.exit().remove();
@@ -273,19 +278,24 @@ function render(data){
     .attr("d", function (d){ return area(d.values); })
     .attr("fill", function (d){ return colorScale(d.key); });
 
-  paths.append("svg:title").text(function(d) {
+  paths.on("mouseover", function(d) {
   	var totalPlays = 0;
   	for (var i = 0; i < d.values.length; i++) {
   		totalPlays += d.values[i].playcount;
   	}
-  	return d.key + "\nPlay count: " + totalPlays;
-  });
-
-  paths.on("mouseover", function() {
+  	div.transition()		
+       .duration(200)		
+       .style("opacity", .9);		
+    div.html(d.key + "<br>Play count: " + totalPlays)	
+        .style("left", (d3.event.pageX) + "px")		
+        .style("top", (d3.event.pageY - 28) + "px");	
   	d3.select(this).attr("stroke", "black");
   	d3.select(this).attr("stroke-width", function(d) {return 5;});
   });
-      paths.on("mouseout", function() {
+  paths.on("mouseout", function() {
+  	div.transition()		
+       .duration(500)		
+       .style("opacity", 0);
   	d3.select(this).attr("stroke", "white");
   	d3.select(this).attr("stroke-width", "0");
   });
