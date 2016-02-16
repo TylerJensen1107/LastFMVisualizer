@@ -14,6 +14,9 @@ var loaded = false;
 document.getElementById("submit").onclick = callLoadName;
 document.getElementById("timeConst").onchange = callLoadName;
 
+// Listener for user selecting single artist
+$('#artistSelector').change(artistSelected);
+
 function callLoadName() {
   // Removes all data from graph
   d3.select("svg").remove();
@@ -330,9 +333,19 @@ function render(data){
   for (var key in bandNameArray) {
     if (!bandNameArray.hasOwnProperty(key)) continue;
 
-    var artistName = '<option value=' + key + '>' + key + '</option>';
+    // Convert spaces to underscores
+    var formatVal = key.replace(/ /g, "_");
+
+    var artistName = '<option value=' + formatVal + '>' + key + '</option>';
     $('#artistSelector').append(artistName);
   }
+}
+
+function artistSelected() {
+  var artist = $("#artistSelector").val();
+  console.log("Artist Selected : " + artist);
+
+  
 }
 
 function type(d){
