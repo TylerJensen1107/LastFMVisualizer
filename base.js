@@ -327,24 +327,12 @@ function render(data){
 
   colorLegendG.call(colorLegend);
 
-  // Populating artist dropdown selector
-  // for (var i = 0; i < bandNameArray.length; i++) {
-  // 	console.log(bandNameArray[i]);
-  // }
-
   for (var key in bandNameArray) {
-    // skip loop if the property is from prototype
     if (!bandNameArray.hasOwnProperty(key)) continue;
 
-    var obj = bandNameArray[key];
-    for (var prop in obj) {
-        // skip loop if the property is from prototype
-        if(!obj.hasOwnProperty(prop)) continue;
-
-        // Gets all artist names
-        console.log(obj.name);
-    }
-}
+    var artistName = '<option value=' + key + '>' + key + '</option>';
+    $('#artistSelector').append(artistName);
+  }
 }
 
 function type(d){
