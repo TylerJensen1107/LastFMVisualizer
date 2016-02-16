@@ -214,13 +214,18 @@ var xScale = d3.scale.linear().range([0, innerWidth]);
 var yScale = d3.scale.linear().range([innerHeight, 0]);
 var colorScale = d3.scale.category20();
 
-
 var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
   .ticks(5)
   .outerTickSize(0);
 var yAxis = d3.svg.axis().scale(yScale).orient("left")
   .ticks(5)
   .outerTickSize(0);
+
+// https://bl.ocks.org/mbostock/6452972
+var brush = d3.svg.brush()
+.x(xAxis)
+.extent([0, 0])
+.on("brush", brushed);
 
 var stack = d3.layout.stack()
   .y(function (d){ return d.playcount; })
@@ -267,7 +272,15 @@ function render(data){
   paths
     .attr("d", function (d){ return area(d.values); })
     .attr("fill", function (d){ return colorScale(d.key); });
-  paths.append("svg:title").text(function(d) { return d.key; });
+
+  paths.append("svg:title").text(function(d) {
+  	var totalPlays = 0;
+  	for (var i = 0; i < d.values.length; i++) {
+  		totalPlays += d.values[i].playcount;
+  	}
+  	return d.key + "\nMax play count: " + totalPlays;
+  });
+
   paths.on("mouseover", function() {
   	d3.select(this).attr("stroke", "black");
   	d3.select(this).attr("stroke-width", function(d) {return 5;});
