@@ -43,7 +43,7 @@ function callLoadName() {
 	 	dataArray.sort(function(a, b) {
 	 		return b.length - a.length;
 	 	});
-	 	for(var i = 0; i < NUM_BANDS; i++) {
+	 	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
 	 		var index = 0;
 	 		var monthCount = 0;
 	 		for(var j = 0; j < week; j++) {
@@ -222,10 +222,10 @@ var yAxis = d3.svg.axis().scale(yScale).orient("left")
   .outerTickSize(0);
 
 // https://bl.ocks.org/mbostock/6452972
-var brush = d3.svg.brush()
-.x(xAxis)
-.extent([0, 0])
-.on("brush", brushed);
+// var brush = d3.svg.brush()
+// .x(xAxis)
+// .extent([0, 0])
+// .on("brush", brushed);
 
 var stack = d3.layout.stack()
   .y(function (d){ return d.playcount; })
