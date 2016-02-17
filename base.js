@@ -16,6 +16,7 @@ var sortByConsistency = true;
 var parseDate = d3.time.format("%m/%d/%Y").parse;
 
 document.getElementById("submit").onclick = callLoadName;
+$( "#timeConst" ).on( "slidestart", function( event, ui ) {console.log(1)} );
 
 function callLoadName() {
   // Removes all data from graph
@@ -39,6 +40,8 @@ function callLoadName() {
   if (newArtistNum.length > 0) {
     NUM_BANDS = newArtistNum;
   }
+
+  if(NUM_BANDS == 311) window.open("https://www.youtube.com/watch?v=MSwihOwFX0Q");
 
   sortByConsistency = document.getElementById("consistency").checked;
   console.log(sortByConsistency);
@@ -195,7 +198,7 @@ function render(data){
 
 	var outerWidth = 1000;
 	var outerHeight = 500;
-	var margin = { left: 55, top: 5, right: 100, bottom: 60 };
+	var margin = { left: 55, top: 5, right: 120, bottom: 60 };
 
 	var xColumn = "weekNumber";
 	var yColumn = "listens";
@@ -236,7 +239,7 @@ function render(data){
 
 	var colorLegendG = svg.append("g")
 	  .attr("class", "color-legend")
-	  .attr("transform", "translate("+ (outerWidth - 80) + ", 5)");
+	  .attr("transform", "translate("+ (outerWidth - 100) + ", 5)");
 
 	var xScale = d3.time.scale().range([0, innerWidth]);
 	var yScale = d3.scale.linear().range([innerHeight, 0]);
