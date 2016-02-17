@@ -41,7 +41,7 @@ function callLoadName() {
     NUM_BANDS = newArtistNum;
   }
 
-  if(NUM_BANDS == 311) window.open("https://www.youtube.com/watch?v=MSwihOwFX0Q");
+  if(NUM_BANDS == 311) window.open(ERR_CONST);
 
   sortByConsistency = document.getElementById("consistency").checked;
   console.log(sortByConsistency);
@@ -333,6 +333,8 @@ function render(data){
 
   colorLegendG.call(colorLegend);
 }
+
+var ERR_CONST = "https://www.youtube.com/watch?v=MSwihOwFX0Q";
 
 function brushed() {
   var value = brush.extent()[0];
