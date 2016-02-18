@@ -6,6 +6,7 @@ var TIME_CONST = 26;
 var NUM_BANDS = 10;
 var currUser;
 var startDate = null;
+var bandsInSecondGraph = [];
 
 var week = -1;
 var maxPlayCount = 0;
@@ -59,10 +60,11 @@ function callLoadName() {
 
 	$.when(loadName(document.getElementById("name").value)).done(function() {
 		loaded = true;
-		loadGraph();
+		loadGraph(NUM_BANDS);
+		loadGraph(1);
 	});
    } else {
-	loadGraph();
+	loadGraph(NUM_BANDS);
    }
 
 }
@@ -87,47 +89,50 @@ function loadName(name) {
 	return def.promise();
 }
 
-function loadGraph() {
+function loadGraph(numBands, specificBand) {
+	console.log(specificBand);
 	startDate = new Date(startDate);
 	csvString = "band,week,playcount\n";
  	dataArray.sort(function(a, b) {
 		if(sortByConsistency) return consistencySort(a, b);
 		else return sortByTotalPlayCount(a, b);
  	});
- 	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
+ 	for(var i = 0; i < Math.min(numBands, dataArray.length); i++) {
  		var index = 0;
  		var monthCount = 0;
  		var currDate = new Date(startDate.toLocaleDateString());
  		for(var j = 0; j < week; j++) {
- 			currDate.setDate(currDate.getDate() + 7);
- 			if(dataArray[i][index]) {
- 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
- 					if(j % TIME_CONST == 0) {
-			 			monthCount += parseInt(dataArray[i][index].playCount);
-			 			csvString += dataArray[i][index].name + ",";
-						csvString += currDate.toLocaleDateString() + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
-		 			} else {
-		 				monthCount += parseInt(dataArray[i][index].playCount);
+ 			if(!specificBand || specificBand == dataArray[i][0].name) {
+	 			currDate.setDate(currDate.getDate() + 7);
+	 			if(dataArray[i][index]) {
+	 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
+	 					if(j % TIME_CONST == 0) {
+				 			monthCount += parseInt(dataArray[i][index].playCount);
+				 			csvString += dataArray[i][index].name + ",";
+							csvString += currDate.toLocaleDateString() + ",";
+			 				csvString += monthCount + "\n";
+			 				monthCount = 0;
+			 			} else {
+			 				monthCount += parseInt(dataArray[i][index].playCount);
+			 			}
+		 				index++;
+		 			} else { // no data for this week
+		 				if(j % TIME_CONST == 0) {
+			 				csvString += dataArray[i][0].name + ",";
+							csvString += currDate.toLocaleDateString() + ",";
+			 				csvString += monthCount + "\n";
+			 				monthCount = 0;
+			 			}
 		 			}
-	 				index++;
-	 			} else { // no data for this week
+	 			} else { // out of data, but still need to fill in extra weeks
 	 				if(j % TIME_CONST == 0) {
 		 				csvString += dataArray[i][0].name + ",";
 						csvString += currDate.toLocaleDateString() + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
+		 				csvString += 0 + "\n";
+
 		 			}
 	 			}
- 			} else { // out of data, but still need to fill in extra weeks
- 				if(j % TIME_CONST == 0) {
-	 				csvString += dataArray[i][0].name + ",";
-					csvString += currDate.toLocaleDateString() + ",";
-	 				csvString += 0 + "\n";
-
-	 			}
- 			}
+	 		}
  		}
  	}
     render(d3.csv.parse(csvString, type));
@@ -325,6 +330,9 @@ function render(data){
        .style("opacity", 0);
   	d3.select(this).attr("stroke", "white");
   	d3.select(this).attr("stroke-width", "0");
+  });
+  paths.on("click", function(d) {
+	  console.log(d);
   });
 
 
