@@ -1,4 +1,3 @@
-
 var dataArray = [];
 var bandNameArray = [];
 var bands = 0;
@@ -18,12 +17,12 @@ var parseDate = d3.time.format("%m/%d/%Y").parse;
 document.getElementById("submit").onclick = callLoadName;
 $( "#timeConst" ).on( "slidestart", function( event, ui ) {console.log(1)} );
 
+$('#artistSelector').change(artistSelected);
+
 function callLoadName() {
   // Removes all data from graph
   d3.select("svg").remove();
-
   var username = document.getElementById("name").value;
-
   if(currUser && currUser != username) {
   	loaded = false;
   	currUser = username;
@@ -59,16 +58,22 @@ function callLoadName() {
 
 	$.when(loadName(document.getElementById("name").value)).done(function() {
 		loaded = true;
-		loadGraph();
+    populateDropdown();
+    var artistName = $("#artistSelector").val();
+    if (artistName != "noArtist") {
+      // $("#artistChart").html("");
+      artistName = artistName.split('_').join(' ');
+      loadGraph(artistName);
+    } else {
+      loadGraph();
+    }
 	});
    } else {
 	loadGraph();
    }
-
 }
 
 function loadName(name) {
-
 	var def = $.Deferred();
 
 	$.ajax({
@@ -81,57 +86,88 @@ function loadName(name) {
         requests.push(loadWeekData(data, name));
 
         $.when.apply($, requests).then(function() { def.resolve(); });
-
 	});
-
 	return def.promise();
 }
 
-function loadGraph() {
+function loadGraph(artistName) {
 	startDate = new Date(startDate);
 	csvString = "band,week,playcount\n";
  	dataArray.sort(function(a, b) {
 		if(sortByConsistency) return consistencySort(a, b);
 		else return sortByTotalPlayCount(a, b);
  	});
- 	for(var i = 0; i < Math.min(NUM_BANDS, dataArray.length); i++) {
+  var loopNum = dataArray.length;
+  if (!artistName) loopNum = Math.min(NUM_BANDS, dataArray.length);
+
+ 	for(var i = 0; i < loopNum; i++) {
  		var index = 0;
  		var monthCount = 0;
  		var currDate = new Date(startDate.toLocaleDateString());
  		for(var j = 0; j < week; j++) {
  			currDate.setDate(currDate.getDate() + 7);
  			if(dataArray[i][index]) {
- 				if(dataArray[i][index].weekNumber == j) { //if there is data for this week
- 					if(j % TIME_CONST == 0) {
-			 			monthCount += parseInt(dataArray[i][index].playCount);
-			 			csvString += dataArray[i][index].name + ",";
-						csvString += currDate.toLocaleDateString() + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
-		 			} else {
-		 				monthCount += parseInt(dataArray[i][index].playCount);
-		 			}
-	 				index++;
-	 			} else { // no data for this week
-	 				if(j % TIME_CONST == 0) {
-		 				csvString += dataArray[i][0].name + ",";
-						csvString += currDate.toLocaleDateString() + ",";
-		 				csvString += monthCount + "\n";
-		 				monthCount = 0;
-		 			}
-	 			}
+        if (!artistName) {  // There is no artist passed in
+   				if(dataArray[i][index].weekNumber == j) { // if there is data for this week
+   					if(j % TIME_CONST == 0) {
+  			 			monthCount += parseInt(dataArray[i][index].playCount);
+  			 			csvString += dataArray[i][index].name + ",";
+  						csvString += currDate.toLocaleDateString() + ",";
+  		 				csvString += monthCount + "\n";
+  		 				monthCount = 0;
+  		 			} else {
+  		 				monthCount += parseInt(dataArray[i][index].playCount);
+  		 			}
+  	 				index++;
+  	 			} else { // no data for this week
+  	 				if(j % TIME_CONST == 0) {
+  		 				csvString += dataArray[i][0].name + ",";
+  						csvString += currDate.toLocaleDateString() + ",";
+  		 				csvString += monthCount + "\n";
+  		 				monthCount = 0;
+  		 			}
+  	 			}
+        } else { // There is an artist passed in
+          if (dataArray[i][0].name == artistName) {
+            if (dataArray[i][index].weekNumber == j) { //if there is data for this week
+              if(j % TIME_CONST == 0) {
+                monthCount += parseInt(dataArray[i][index].playCount);
+                csvString += dataArray[i][index].name + ",";
+                csvString += currDate.toLocaleDateString() + ",";
+                csvString += monthCount + "\n";
+                monthCount = 0;
+              } else {
+                monthCount += parseInt(dataArray[i][index].playCount);
+              }
+              index++;
+            } else { // no data for this week
+              if(j % TIME_CONST == 0) {
+                csvString += dataArray[i][0].name + ",";
+                csvString += currDate.toLocaleDateString() + ",";
+                csvString += monthCount + "\n";
+                monthCount = 0;
+              }
+            }
+          }
+        }
  			} else { // out of data, but still need to fill in extra weeks
  				if(j % TIME_CONST == 0) {
 	 				csvString += dataArray[i][0].name + ",";
 					csvString += currDate.toLocaleDateString() + ",";
 	 				csvString += 0 + "\n";
-
 	 			}
  			}
  		}
  	}
-    render(d3.csv.parse(csvString, type));
-    document.getElementById("loading").style.display = "none";
+
+  render(d3.csv.parse(csvString, type), artistName);
+
+  // if (!artistName) {
+  //   render(d3.csv.parse(csvString, type));
+  // } else {
+  //   render(d3.csv.parse(csvString, type));
+  // }
+  document.getElementById("loading").style.display = "none";
 }
 
 function loadWeekData(data, name) {
@@ -194,7 +230,7 @@ function loadWeekData(data, name) {
 // .on('mouseout', tip.hide)
 
 
-function render(data){
+function render(data, artistName){
 
 	var outerWidth = 1000;
 	var outerHeight = 500;
@@ -214,7 +250,11 @@ function render(data){
 	var innerWidth  = outerWidth  - margin.left - margin.right;
 	var innerHeight = outerHeight - margin.top  - margin.bottom;
 
-	var svg = d3.select("#chart").append("svg")
+  var chartArea = "#chart";
+  if ($('#artistChart').html().length == 0 && artistName) chartArea = "#artistChart";
+  // if (artistName) chartArea = "#artistChart";
+
+	var svg = d3.select(chartArea).append("svg")
 	  .attr("width", outerWidth)
 	  .attr("height", outerHeight);
 	var g = svg.append("g")
@@ -252,12 +292,6 @@ function render(data){
 	  .ticks(5)
 	  .outerTickSize(0);
 
-	// https://bl.ocks.org/mbostock/6452972
-	// var brush = d3.svg.brush()
-	// .x(xAxis)
-	// .extent([0, 0])
-	// .on("brush", brushed);
-
 	var stack = d3.layout.stack()
 	  .y(function (d){ return d.playcount; })
 	  .values(function (d){ return d.values; });
@@ -279,7 +313,6 @@ function render(data){
     .entries(data);
 
    colorScale.domain(nested.map(function (d){ return d.key; }));
-
 
   // Reversed the order here so the order matches between legend & areas.
   var layers = stack(nested.reverse());
@@ -338,12 +371,10 @@ var ERR_CONST = "https://www.youtube.com/watch?v=MSwihOwFX0Q";
 
 function brushed() {
   var value = brush.extent()[0];
-
   if (d3.event.sourceEvent) { // not a programmatic event
     value = xAxis.invert(d3.mouse(this)[0]);
     brush.extent([value, value]);
   }
-
   handle.attr("cx", x(value));
   d3.select("body").style("background-color", d3.hsl(value, .8, .8));
 }
@@ -370,4 +401,103 @@ function consistencySort(a, b) {
 	return b.length - a.length;
 }
 
+function populateDropdown() {
+  for (var key in bandNameArray) {
+    if (!bandNameArray.hasOwnProperty(key)) continue;
+    // var formatVal = key.replaceAll(/ /g, "_");
+    var formatVal = key.split(' ').join('_');
 
+    var artist = '<option value=' + formatVal + '>' + key + '</option>';
+    $('#artistSelector').append(artist);
+  }
+}
+
+// Called when user selects user. Function to gather name selected and data on that artist
+function artistSelected() {
+  // Gets the artist selected
+  var artistName = $("#artistSelector").val();
+  artistName = artistName.split('_').join(' ');
+
+  loadGraph(artistName);
+}
+
+// Makes the artist chart
+// function renderArtistChart(data) {
+//   console.log(data);
+
+//   var outerWidth = 1000;
+//   var outerHeight = 500;
+//   var margin = { left: 55, top: 5, right: 100, bottom: 60 };
+
+//   var xColumn = "weekNumber";
+//   var yColumn = "listens";
+//   var colorColumn = "country";
+//   var areaColumn = colorColumn;
+
+//   var xAxisLabelText = "Week";
+//   var xAxisLabelOffset = 48;
+
+//   var yAxisLabelText = "Listens";
+//   var yAxisLabelOffset = 35;
+
+//   var innerWidth  = outerWidth  - margin.left - margin.right;
+//   var innerHeight = outerHeight - margin.top  - margin.bottom;
+
+//   var svg = d3.select("#chart").append("svg")
+//     .attr("width", outerWidth)
+//     .attr("height", outerHeight);
+//   var g = svg.append("g")
+//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+//   var xAxisG = g.append("g")
+//     .attr("class", "x axis")
+//     .attr("transform", "translate(0," + innerHeight + ")")
+//   var xAxisLabel = xAxisG.append("text")
+//     .style("text-anchor", "middle")
+//     .attr("transform", "translate(" + (innerWidth / 2) + "," + xAxisLabelOffset + ")")
+//     .attr("class", "label")
+//     .text(xAxisLabelText);
+
+//   var yAxisG = g.append("g")
+//     .attr("class", "y axis");
+//   var yAxisLabel = yAxisG.append("text")
+//     .style("text-anchor", "middle")
+//     .attr("transform", "translate(-" + yAxisLabelOffset + "," + (innerHeight / 2) + ") rotate(-90)")
+//     .attr("class", "label")
+//     .text(yAxisLabelText);
+
+//   var xScale = d3.scale.linear().range([0, innerWidth]);
+//   var yScale = d3.scale.linear().range([innerHeight, 0]);
+
+//   var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
+//     .ticks(5)
+//     .outerTickSize(0);
+//   var yAxis = d3.svg.axis().scale(yScale).orient("left")
+//     .ticks(5)
+//     .outerTickSize(0);
+
+//   xScale.domain(d3.extent(data, function (d){ return d.week; }));
+//   yScale.domain([0, d3.max(data, function(d) { console.log(d); return d.y; })]);
+
+//   // var colorLegendG = svg.append("g")
+//   //   .attr("class", "color-legend")
+//   //   .attr("transform", "translate("+ (outerWidth - 100) + ", 5)");
+//   var colorScale = d3.scale.category20();
+
+//   var area = d3.svg.area()
+//     .x(function(d) { return xScale(d.week); })
+//     .y0(function(d) { return yScale(d.y0); })
+//     .y1(function(d) { return yScale(d.y + d.y0); });
+
+//   // svg.append("path")
+//   //     .datum(data)
+//   //     .attr("class", "area")
+//   //     .attr("d", area);
+
+//   var paths = g.selectAll(".chart").data(data);
+//     paths.enter().append("path").attr("class", "line-chart");
+//     paths.exit().remove();
+//   paths
+//     .attr("d", function (d){ return area(d.values); })
+//     .attr("fill", function (d){ return colorScale(d.key); });
+// }
