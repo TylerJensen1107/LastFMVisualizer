@@ -45,12 +45,20 @@ svg {
     </div>
 
     <div class="container">
-                <input id="submit" value="submit" type="submit">
+        <select id="artistSelector">
+            <option value="noArtist">Artist Not Selected</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <input id="submit" value="submit" type="submit">
     </div>
 
     <img id="loading" src="loading.gif" style="display: none">
 
-    <div id="chart"><div>
+    <div id="chart"></div>
+
+    <div id="artistChart"></div>
 
 </body>
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
