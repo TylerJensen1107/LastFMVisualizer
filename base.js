@@ -14,6 +14,7 @@ var loaded = false;
 var sortByConsistency = true;
 
 var parseDate = d3.time.format("%m/%d/%Y").parse;
+readTextFile();
 
 document.getElementById("submit").onclick = callLoadName;
 $( "#timeConst" ).on( "slidestart", function( event, ui ) {console.log(1)} );
@@ -439,6 +440,7 @@ function populateDropdown() {
   }
 }
 
+
 // Called when user selects user. Function to gather name selected and data on that artist
 function artistSelected() {
   // Gets the artist selected
@@ -460,9 +462,17 @@ function readTextFile(user)
             {
                 var allText = rawFile.responseText;
                 allText = allText.split('\n');
-                for(var i = 0; i < allText.length; i++) {
-                  console.log(allText[i]);
-                  if(allText[i] == user) return;
+                if(!user) {
+                  $('#userSelector').html("<option value=\"noUser\">User Not Selected</option>");
+                  console.log(allText);
+                  for(var i = 0; i < allText.length; i++) {
+                    var artist = '<option value=' + allText[i] + '>' + allText[i] + '</option>';
+                    $('#userSelector').append(artist);
+                  }
+                } else {
+                  for(var i = 0; i < allText.length; i++) {
+                    if(allText[i] == user) return;
+                  }
                 }
             }
         }
