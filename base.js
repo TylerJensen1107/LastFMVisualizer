@@ -70,7 +70,7 @@ function callLoadName() {
       document.getElementById("loading").style.width = "50px";
       document.getElementById("loading").style.height = "50px";
 
-      $.when(loadName(document.getElementById("name").value)).done(function() {
+      $.when(loadName(username)).done(function() {
       	loaded = true;
         var artistName = $("#artistSelector").val();
         if (artistName != "noArtist") {
