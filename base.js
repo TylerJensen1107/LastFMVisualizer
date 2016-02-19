@@ -6,6 +6,7 @@ var NUM_BANDS = 10;
 var currUser;
 var startDate = null;
 var compareArtistsList = [];
+var usersArray = [];
 
 var week = -1;
 var maxPlayCount = 0;
@@ -473,8 +474,11 @@ function readTextFile(user)
                   $('#userSelector').html("<option value=\"noUser\">User Not Selected</option>");
                   console.log(allText);
                   for(var i = 0; i < allText.length; i++) {
-                    var artist = '<option value=' + allText[i] + '>' + allText[i] + '</option>';
-                    $('#userSelector').append(artist);
+                    if(!usersArray[allText[i]]) {
+                      usersArray[allText[i]] = true;
+                      var artist = '<option value=' + allText[i] + '>' + allText[i] + '</option>';
+                      $('#userSelector').append(artist);
+                    }
                   }
                 } else {
                   for(var i = 0; i < allText.length; i++) {
