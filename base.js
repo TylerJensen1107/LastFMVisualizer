@@ -20,6 +20,7 @@ document.getElementById("submit").onclick = callLoadName;
 $( "#timeConst" ).on( "slidestart", function( event, ui ) {console.log(1)} );
 
 $('#artistSelector').change(artistSelected);
+$("#userSelector").change(callLoadName);
 
 function callLoadName() {
 
@@ -27,6 +28,10 @@ function callLoadName() {
   d3.select("svg").remove();
   d3.select("#artistChart").html("");
   var username = document.getElementById("name").value;
+  if(!username) {
+    username = $("#userSelector").val();
+  }
+
   if(currUser && currUser != username) {
   	loaded = false;
   	currUser = username;
@@ -70,7 +75,7 @@ function callLoadName() {
           // $("#artistChart").html("");
           artistName = artistName.split('_').join(' ');
           loadGraph(artistName);
-        } else {
+        } else if() {
           loadGraph();
         }
       });
