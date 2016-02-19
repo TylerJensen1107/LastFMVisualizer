@@ -20,7 +20,6 @@ document.getElementById("submit").onclick = callLoadName;
 $( "#timeConst" ).on( "slidestart", function( event, ui ) {console.log(1)} );
 
 $('#artistSelector').change(artistSelected);
-$("#userSelector").change(callLoadName);
 
 function callLoadName() {
 
@@ -31,12 +30,15 @@ function callLoadName() {
   if(!username) {
     username = $("#userSelector").val();
   }
+  console.log(username);
 
   if(currUser && currUser != username) {
   	loaded = false;
   	currUser = username;
   }
   else currUser = username; 
+
+  console.log(username);
 
   readTextFile(username);
 
