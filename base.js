@@ -467,7 +467,9 @@ function readTextFile(user)
                 }
             }
         }
-        console.log("new user");
+        var uploadUser = new XMLHttpRequest();
+        rawFile.open("GET", "userAdd.php?user=" + user, false);
+        rawFile.send();
     }
     rawFile.send(null);
 }
