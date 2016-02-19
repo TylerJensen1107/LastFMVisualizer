@@ -22,8 +22,6 @@ $('#artistSelector').change(artistSelected);
 
 function callLoadName() {
 
-  readTextFile();
-
   // Removes all data from graph
   d3.select("svg").remove();
   d3.select("#artistChart").html("");
@@ -33,6 +31,8 @@ function callLoadName() {
   	currUser = username;
   }
   else currUser = username; 
+
+  readTextFile(username);
 
   var newTimeConst = document.getElementById("timeConst").value;
   
@@ -449,7 +449,7 @@ function artistSelected() {
   loadGraph(artistName);
 }
 
-function readTextFile()
+function readTextFile(user)
 {
     var rawFile = new XMLHttpRequest();
     rawFile.open("GET", "users.txt", false);
@@ -463,9 +463,11 @@ function readTextFile()
                 allText = allText.split('\n');
                 for(var i = 0; i < allText.length; i++) {
                   console.log(allText[i]);
+                  if(allText[i] == user) return;
                 }
             }
         }
+        console.log("new user");
     }
     rawFile.send(null);
 }
