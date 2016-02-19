@@ -22,6 +22,8 @@ $('#artistSelector').change(artistSelected);
 
 function callLoadName() {
 
+  readTextFile();
+
   // Removes all data from graph
   d3.select("svg").remove();
   d3.select("#artistChart").html("");
@@ -445,4 +447,25 @@ function artistSelected() {
   artistName = artistName.split('_').join(' ');
 
   loadGraph(artistName);
+}
+
+function readTextFile()
+{
+    var rawFile = new XMLHttpRequest();
+    rawFile.open("GET", "users.txt", false);
+    rawFile.onreadystatechange = function ()
+    {
+        if(rawFile.readyState === 4)
+        {
+            if(rawFile.status === 200 || rawFile.status == 0)
+            {
+                var allText = rawFile.responseText;
+                allText = allText.split('\n');
+                for(var i = 0; i < allText.length; i++) {
+                  console.log(allText[i]);
+                }
+            }
+        }
+    }
+    rawFile.send(null);
 }
