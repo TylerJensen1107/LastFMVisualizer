@@ -256,9 +256,9 @@ function loadWeekData(data, name) {
 
 function render(data, artistName){
 
-	var outerWidth = 1000;
+	var outerWidth = 1100;
 	var outerHeight = 500;
-	var margin = { left: 55, top: 5, right: 120, bottom: 60 };
+	var margin = { left: 55, top: 5, right: 160, bottom: 60 };
 
 	var xColumn = "weekNumber";
 	var yColumn = "listens";
@@ -303,7 +303,7 @@ function render(data, artistName){
 
 	var colorLegendG = svg.append("g")
 	  .attr("class", "color-legend")
-	  .attr("transform", "translate("+ (outerWidth - 100) + ", 5)");
+	  .attr("transform", "translate("+ (outerWidth - 130) + ", 5)");
 
 	var xScale = d3.time.scale().range([0, innerWidth]);
 	var yScale = d3.scale.linear().range([innerHeight, 0]);
@@ -395,7 +395,6 @@ function render(data, artistName){
      loadGraph(d.key, true);
     });
   }
-
 
   xAxisG.call(xAxis);
   yAxisG.call(yAxis);

@@ -16,9 +16,26 @@ body {
 	width : 400px;
 }
 
-#chart {
+#chart, #artistChart {
 	float: left;
 	clear: both;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.charts {
+    vertical-align: middle;
+    display: inline-block;
+    text-align: left;
+}
+
+.title {
+    font-size: 15px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 40px;
 }
 
 div.tooltip {	
