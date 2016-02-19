@@ -75,7 +75,7 @@ function callLoadName() {
           // $("#artistChart").html("");
           artistName = artistName.split('_').join(' ');
           loadGraph(artistName);
-        } else if() {
+        } else {
           loadGraph();
         }
       });
